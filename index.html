@@ -1,0 +1,1818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>StudyHub</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #07000d; }
+    ::-webkit-scrollbar { display: none; }
+    scrollbar-width: none;
+    input, textarea, button { font-family: 'Segoe UI', sans-serif; }
+    input::placeholder, textarea::placeholder { color: #555; }
+    @keyframes zverseFade { 0% { opacity:0; transform:scale(0.92); } 18% { opacity:1; transform:scale(1); } 82% { opacity:1; transform:scale(1); } 100% { opacity:0; transform:scale(1.04); } }
+    @keyframes zverseGlow { 0%,100% { filter:drop-shadow(0 0 14px currentColor); } 50% { filter:drop-shadow(0 0 28px currentColor); } }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    /* ─── THEMES ─── */
+    const PINK = { primary:"#ff2d78", secondary:"#ff6eb4", bg:"#07000d", card:"#110018", border:"#ff2d7838", glow:"#ff2d7820", text:"#fff", sub:"#ff6eb4bb" };
+    const BLUE = { primary:"#2d8fff", secondary:"#6eb4ff", bg:"#00070d", card:"#001018", border:"#2d8fff38", glow:"#2d8fff20", text:"#fff", sub:"#6eb4ffbb" };
+    const GREEN = { primary:"#ff2d78", secondary:"#ff6eb4", bg:"#07000d", card:"#110018", border:"#ff2d7838", glow:"#ff2d7820", text:"#fff", sub:"#ff6eb4bb" };
+
+    const profiles = {
+      neha:    { theme:PINK,  name:"Neha",    fullName:"Neha Milton",  college:"BTECH FROM REC Mainpuri", roll:"2508400130037", father:"Kamlesh Kumar",  mother:"Sunita Milton", greeting:"NEHA ♡",    menuMsg:"I Love You Neha 💕", showMenu:true,  isStudent:false, noConnect:false },
+      prince:  { theme:BLUE,  name:"Prince",  fullName:"Prince Rana",  college:"Btech - REC Mainpuri",    roll:"2508400130041", father:"Rastradeep",      mother:"Reeta Rana",    greeting:"PRINCE ✦",  menuMsg:null,                 showMenu:false, isStudent:false, noConnect:false },
+      student: { theme:GREEN, name:"Student", fullName:"Student",      college:"",                         roll:"",               father:"",                 mother:"",              greeting:"STUDENT ✦", menuMsg:null,                 showMenu:true,  isStudent:true,  noConnect:true  },
+      guest:   { theme:GREEN, name:"Guest",   fullName:"Guest",        college:"",                         roll:"",               father:"",                 mother:"",              greeting:"GUEST ✦",   menuMsg:null,                 showMenu:true,  isStudent:true,  noConnect:true  },
+    };
+
+
+    /* ─── NEON SVG ICONS ─── */
+    function NeonIcon({ type, color, size = 28 }) {
+      const s = { width: size, height: size, display: "block", filter: `drop-shadow(0 0 6px ${color}) drop-shadow(0 0 12px ${color}88)` };
+      const c = color;
+      const icons = {
+        book:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M4 4h7v16H4z" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/><path d="M20 4h-7v16h7z" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/><path d="M11 4v16M4 8h7M4 12h7M13 8h7M13 12h7" stroke={c} strokeWidth="1.2"/></svg>,
+        notes:   <svg style={s} viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="14" height="18" rx="2" stroke={c} strokeWidth="1.8"/><path d="M8 7h6M8 11h6M8 15h4" stroke={c} strokeWidth="1.5" strokeLinecap="round"/><path d="M16 14l2.5 2.5-1 1L15 15" stroke={c} strokeWidth="1.4"/></svg>,
+        grad:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M12 4L3 9l9 5 9-5-9-5z" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/><path d="M7 11.5v4.5c0 1.7 2.2 3 5 3s5-1.3 5-3v-4.5" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/><path d="M21 9v4" stroke={c} strokeWidth="2" strokeLinecap="round"/></svg>,
+        code:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M8 8L4 12l4 4M16 8l4 4-4 4M14 6l-4 12" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+        syllabus:<svg style={s} viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke={c} strokeWidth="1.8"/><path d="M7 8h10M7 12h7M7 16h5" stroke={c} strokeWidth="1.5" strokeLinecap="round"/><path d="M17 14l1.5 1.5-1 1L16 15" stroke={c} strokeWidth="1.4"/></svg>,
+        star:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M12 2l2.9 6.2L22 9.3l-5 4.8 1.2 6.9L12 17.8l-6.2 3.2 1.2-6.9-5-4.8 7.1-1.1z" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/></svg>,
+        home:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1z" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/><path d="M9 21V12h6v9" stroke={c} strokeWidth="1.6" strokeLinejoin="round"/></svg>,
+        cal:     <svg style={s} viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke={c} strokeWidth="1.8"/><path d="M3 10h18M8 3v4M16 3v4M7 14h2v2H7zM11 14h2v2h-2zM15 14h2v2h-2z" stroke={c} strokeWidth="1.4" strokeLinecap="round"/></svg>,
+        trophy:  <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M8 4h8v8a4 4 0 01-8 0V4z" stroke={c} strokeWidth="1.8"/><path d="M4 4h4M20 4h-4M4 4c0 4 2 6 4 7M20 4c0 4-2 6-4 7M12 16v4M8 20h8" stroke={c} strokeWidth="1.6" strokeLinecap="round"/></svg>,
+        user:    <svg style={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke={c} strokeWidth="1.8"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke={c} strokeWidth="1.8" strokeLinecap="round"/></svg>,
+        check:   <svg style={s} viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+        arrow:   <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+        back:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+        moon:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/></svg>,
+        chart:   <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M4 20h16M8 20V12M12 20V8M16 20V4" stroke={c} strokeWidth="2" strokeLinecap="round"/></svg>,
+        lock:    <svg style={s} viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke={c} strokeWidth="1.8"/><path d="M8 11V7a4 4 0 018 0v4" stroke={c} strokeWidth="1.8" strokeLinecap="round"/><circle cx="12" cy="16" r="1.5" fill={c}/></svg>,
+        bell:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+        menu:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke={c} strokeWidth="2" strokeLinecap="round"/></svg>,
+        dstl:    <svg style={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke={c} strokeWidth="1.5"/><path d="M12 3v9l5 5" stroke={c} strokeWidth="1.8" strokeLinecap="round"/><circle cx="12" cy="12" r="2" fill={c} opacity="0.7"/></svg>,
+        de:      <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/></svg>,
+        hv:      <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M12 21C12 21 4 15 4 9a5 5 0 0110 0 5 5 0 0110 0c0 6-8 12-8 12z" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/></svg>,
+        web:     <svg style={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke={c} strokeWidth="1.8"/><path d="M12 3c-3 3-4 6-4 9s1 6 4 9M12 3c3 3 4 6 4 9s-1 6-4 9M3 12h18" stroke={c} strokeWidth="1.4"/></svg>,
+        ds:      <svg style={s} viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="6" rx="8" ry="3" stroke={c} strokeWidth="1.8"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6" stroke={c} strokeWidth="1.8"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" stroke={c} strokeWidth="1.8"/></svg>,
+        coa:     <svg style={s} viewBox="0 0 24 24" fill="none"><rect x="4" y="6" width="16" height="12" rx="2" stroke={c} strokeWidth="1.8"/><path d="M8 10h2M14 10h2M8 14h8" stroke={c} strokeWidth="1.5" strokeLinecap="round"/><path d="M9 3v3M15 3v3M9 18v3M15 18v3" stroke={c} strokeWidth="1.4" strokeLinecap="round"/></svg>,
+        cyber:   <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M12 2L4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6z" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/><path d="M9 12l2 2 4-4" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+        tech:    <svg style={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke={c} strokeWidth="1.8"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M16.9 16.9l2.1 2.1M4.9 19.1l2.1-2.1M16.9 7.1l2.1-2.1" stroke={c} strokeWidth="1.8" strokeLinecap="round"/></svg>,
+        python:  <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M12 2C9 2 7 3.5 7 5.5V8h5v1H5.5C3.5 9 2 10.5 2 13s1.5 4 3.5 4H7v-2.5C7 12.5 9 11 12 11s5 1.5 5 3.5V17h1.5c2 0 3.5-1.5 3.5-4s-1.5-4-3.5-4H17V8c0-2-2-6-5-6z" stroke={c} strokeWidth="1.6" strokeLinejoin="round"/><circle cx="9.5" cy="5.5" r="1" fill={c}/><circle cx="14.5" cy="18.5" r="1" fill={c}/><path d="M12 13c-3 0-5 1.5-5 3.5V19c0 2 2 3 5 3s5-1 5-3v-2.5c0-2-2-3.5-5-3.5z" stroke={c} strokeWidth="1.6" strokeLinejoin="round"/></svg>,
+        html:    <svg style={s} viewBox="0 0 24 24" fill="none"><path d="M4 3l1.5 16L12 21l6.5-2L20 3H4z" stroke={c} strokeWidth="1.8" strokeLinejoin="round"/><path d="M8 8h8l-.5 5-3.5 1-3.5-1-.3-3H15" stroke={c} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round"/></svg>,
+      };
+      return icons[type] || <span style={{ fontSize: size * 0.8 }}>●</span>;
+    }
+
+    /* ─── SCHEDULE DATA ─── */
+    const WEEK_DAYS = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+    const WEEK_FULL = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+    const MON_WED = [
+      { name:"DSTL",               icon:"dstl",  tag:"Mathematics",        color:"#ff2d78" },
+      { name:"Digital Electronics", icon:"de",   tag:"Core Subject",        color:"#ff6eb4" },
+      { name:"Human Values",        icon:"hv",   tag:"Value Education",     color:"#39ff14" },
+      { name:"Web Development",     icon:"web",  tag:"Dev Skills",          color:"#00f5ff" },
+    ];
+    const THU_SAT = [
+      { name:"DS",             icon:"ds",    tag:"Data Structures",      color:"#00f5ff" },
+      { name:"COA",            icon:"coa",   tag:"Computer Organization", color:"#00bfff" },
+      { name:"Cyber Security", icon:"cyber", tag:"Security",             color:"#bf00ff" },
+      { name:"Technical Era",  icon:"tech",  tag:"Dev Lectures",         color:"#ffe600" },
+    ];
+    const SCHEDULE = { MON:MON_WED, TUE:MON_WED, WED:MON_WED, THU:THU_SAT, FRI:THU_SAT, SAT:THU_SAT, SUN:[] };
+
+    /* ─── PRINCE SCHEDULE DATA ─── */
+    const PRINCE_MON_THU = [
+      { name:"Cyber Security",    icon:"cyber",  tag:"Security",             color:"#bf00ff" },
+      { name:"DSTL",              icon:"dstl",   tag:"Mathematics",          color:"#2d8fff" },
+      { name:"Digital Electronics",icon:"de",    tag:"Core Subject",         color:"#00bfff" },
+      { name:"COA",               icon:"coa",    tag:"Computer Organization", color:"#6eb4ff" },
+      { name:"DS",                icon:"ds",     tag:"Data Structures",      color:"#00f5ff" },
+      { name:"Python",            icon:"python", tag:"Programming",          color:"#ffe600" },
+    ];
+    const PRINCE_FRI_SAT = [
+      { name:"Human Values",      icon:"hv",     tag:"Value Education",      color:"#39ff14" },
+      { name:"Python",            icon:"python", tag:"Programming",          color:"#ffe600" },
+      { name:"HTML",              icon:"html",   tag:"Web Basics",           color:"#ff6b35" },
+    ];
+    const PRINCE_SCHEDULE = { MON:PRINCE_MON_THU, TUE:PRINCE_MON_THU, WED:PRINCE_MON_THU, THU:PRINCE_MON_THU, FRI:PRINCE_FRI_SAT, SAT:PRINCE_FRI_SAT, SUN:[] };
+
+    /* ─── STORAGE HELPERS ─── */
+    const SCHEDULE_START = new Date(2026, 6, 23); // Schedule tracking starts 23/07/2026
+    function weekKey() {
+      const d = new Date();
+      const diffDays = Math.floor((d - SCHEDULE_START) / 86400000);
+      const weekNum = Math.floor(diffDays / 7);
+      return `w${weekNum}`;
+    }
+    function ck(dayIdx, uname) { return `sh_sched_${uname}_${dayIdx}_${weekKey()}`; }
+    function getChecked(dayIdx, uname) { try { return JSON.parse(localStorage.getItem(ck(dayIdx, uname))) || []; } catch { return []; } }
+    function setChecked(dayIdx, uname, arr) { localStorage.setItem(ck(dayIdx, uname), JSON.stringify(arr)); }
+    function getPct(dayIdx, uname) {
+      if (dayIdx === 6) return 100;
+      const sched = uname === "prince" ? PRINCE_SCHEDULE : SCHEDULE;
+      const subs = sched[WEEK_DAYS[dayIdx]];
+      if (!subs.length) return 0;
+      return Math.round((getChecked(dayIdx, uname).length / subs.length) * 100);
+    }
+
+    /* ─── SUBJECTS ─── */
+    const studySubjects = [
+      { id:"dstl",  name:"DSTL",               icon:"dstl",  units:["https://rumble.com/embed/v6zx09y/?pub=4nsqfe","https://rumble.com/embed/v6zwupi/?pub=4nsqfe","https://rumble.com/embed/v6zwxq8/?pub=4nsqfe","https://rumble.com/embed/v6zwux8/?pub=4nsqfe","https://rumble.com/embed/v6zwxl2/?pub=4nsqfe"] },
+      { id:"de",    name:"Digital Electronics", icon:"de",   units:["https://youtu.be/r9USM-kdg_M?si=gsp1BvTDi0Q2D0Tc","https://youtu.be/OakjqxOFyA4?si=lkiXPEhVz-xAQNxO","https://youtu.be/Xbg6EUZWKiY?si=F3VKM4fNS8L1KHmP","https://youtu.be/s8K267-tDyY?si=Nn3P3w51lXuyvwLO","https://youtu.be/_HY-XMzKbGY?si=oCJfAD7Ffml3sDST"] },
+      { id:"cyber", name:"Cyber Security",      icon:"cyber", isCyber:true,
+        gateway: ["https://youtu.be/CS0TnarvYhM?si=EFwty7n3OzrP1yIS","https://youtu.be/2iko-lNlQIM?si=7ZntdADxByx78jaK","https://youtu.be/yzPe7QyP9yE?si=_6hcs_K9cBPpTHk0","https://youtu.be/SV88eugd8V8?si=HRT75tXXwXyKzyX_","https://youtu.be/a_AHOt8_9zE?si=KS-U9BWMzkSEi1Ym"],
+        semAdda: ["https://youtu.be/KWRebgEgMnc?si=03dSckrQlDLoRizQ","https://youtu.be/0i_EuabRl7E?si=FMACGz_2yewI2Ty3","https://youtu.be/drKaRSMm9_0?si=TxX87-dIq2W4yhtt","https://youtu.be/dxTdgMqN06I?si=15lUPQ7udTQfG6QF"] },
+      { id:"ds",   name:"DS",                  icon:"ds",    isDsMulti:true,
+        gateway: [
+          { label:"Unit 1",       url:"https://youtu.be/3sqQ7NU27jQ?si=N68fKw0YR6bvb2vb" },
+          { label:"Unit 1 Part 2",url:"https://youtu.be/3sqQ7NU27jQ?si=N68fKw0YR6bvb2vb" },
+          { label:"Unit 2 Part 1",url:"https://rumble.com/embed/v6zya0c/?pub=4nsqfe" },
+          { label:"Unit 2 Part 2",url:"https://rumble.com/embed/v6zy9my/?pub=4nsqfe" },
+        ],
+        units:["https://youtu.be/LMxboZv2j8A?si=dCxNZw53MNhq32lK","https://youtu.be/uQf0hFjlNqI?si=BAJeU0N1ZSHsj9xb","https://youtu.be/2xaQfnOkeyA?si=ckSRvX_WbvNyWIKV","https://youtu.be/YeZSvKdXmgo?si=fodtO4mnmktZAqCQ","https://youtu.be/sxytRTqB2BA?si=leCI7OcftyVWXMtt"] },
+      { id:"hv",   name:"Human Values",         icon:"hv",    units:["https://youtu.be/HDXIsoYVclI?si=xb71cWZ1fDqDGlvx","https://youtu.be/zcUSYXDbEsg?si=bC9C-8DQwSTInpRd","https://youtu.be/ND4fxJtyp38?si=RTbZLiu3HwvS3UgX","https://youtu.be/vE71rOGj5I8?si=yEVoD-JEJ_H8Prdb","https://youtu.be/Q3PorTRYbQE?si=zOeYEp1BhOhEEvzs"] },
+      { id:"coa",  name:"COA",                  icon:"coa",   units:["https://youtu.be/X-MlljRcOCQ?si=LRcRywLQPPfkEJw3","https://youtu.be/oHlmYQW0rvs?si=HRSTY5xOE5Xa1vKa","https://youtu.be/kiCH77Vha1g?si=IwIibMbnGHDbUW8f","https://youtu.be/4xNJtQAnlSE?si=dKK_SlDBieQkLVrE","https://youtu.be/kW6y0tANx6E?si=szlUCz2kar-IMJJ"] },
+    ];
+    const codingVerse   = [{name:"Web Development",url:"https://youtu.be/HVjjoMvutj4?si=T5xJ0LTtGVJhqrde"},{name:"App Development (Flutter) - 4th Sem",url:"https://youtu.be/1bQwDO88Gyw?si=8nZ2FFtGsLTKx0U3"},{name:"DSA with C",url:"https://youtu.be/GRxzQXBwA-U?si=pdKAa29cul_mrgKZ"},{name:"DSA with Python",url:"https://youtu.be/QwSgyhSAJnc?si=oX819RU7qLLSICiO"},{name:"SQL Course",url:"https://youtu.be/7azCOKryADA?si=6qULMReKeNxg9qvc"}];
+    const technicalEra  = [{name:"AI Masterclass",url:"https://youtu.be/LrVw2LtJsYw?si=8vADKQRztb9LCapV"},{name:"Notebook LLM",url:"https://youtu.be/_b_Axyn_X5I?si=uQXPpdFMsFL01RWU"},{name:"MS Excel Course",url:"https://youtu.be/Kjz_DDO4Fzs?si=RjCRTqL1EqKYnDPb"},{name:"Canva Course",url:"https://youtu.be/1vzda4uh7nA?si=HAqbbYxYcuFNFDxo"},{name:"Capcut Course",url:"https://youtu.be/wU1w_7PUb5o?si=pqGuOUj7GcKQSLqp"}];
+    const generalCoding = [{name:"C Coding",url:"https://youtu.be/aZb0iu4uGwA?si=vDetvZoBdwHVRWaG"},{name:"Python",url:"https://youtu.be/UrsmFxEIp5k?si=MfiyYmB_FCm661Ji"}];
+    const frontendDev   = [{name:"HTML",url:"https://youtu.be/zysUIv0-xak?si=hQoVM9ovnDOvRsg3"},{name:"CSS",url:"https://youtu.be/ESnrn1kAD4E?si=ZP0Re1XR9FrtiCYZ"},{name:"Javascript",url:"https://youtu.be/VlPiVmYuoqw?si=hOjomOU-ReQR32Ch"}];
+
+    /* ─── REUSABLE COMPONENTS ─── */
+    function GlowBg({ t }) {
+      return (
+        <div style={{ position:"fixed", inset:0, zIndex:0, background:t.bg, overflow:"hidden", pointerEvents:"none" }}>
+          <div style={{ position:"absolute", top:"-15%", right:"-10%", width:420, height:420, borderRadius:"50%", background:`radial-gradient(circle, ${t.primary}16 0%, transparent 70%)`, animation:"blob1 9s ease-in-out infinite alternate" }} />
+          <div style={{ position:"absolute", bottom:"5%", left:"-12%", width:360, height:360, borderRadius:"50%", background:`radial-gradient(circle, ${t.primary}10 0%, transparent 70%)`, animation:"blob2 11s ease-in-out infinite alternate" }} />
+          <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%", opacity:0.3 }} viewBox="0 0 400 800">
+            <defs><filter id="gf"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+            <path d="M-40 180 Q130 80 280 250 T480 420" stroke={t.primary} strokeWidth="1.3" fill="none" filter="url(#gf)"/>
+            <path d="M-40 320 Q90 180 340 360 T580 560" stroke={t.primary} strokeWidth="0.8" fill="none"/>
+            <path d="M310 -40 Q210 190 390 380 T340 800" stroke={t.secondary} strokeWidth="0.9" fill="none" filter="url(#gf)"/>
+            <circle cx="28" cy="28" r="2" fill={t.primary} opacity="0.6" filter="url(#gf)"/>
+            <circle cx="375" cy="55" r="1.5" fill={t.secondary} opacity="0.6"/>
+            <circle cx="18" cy="410" r="1.5" fill={t.primary} opacity="0.4"/>
+          </svg>
+          <style>{`@keyframes blob1{from{transform:translate(0,0)}to{transform:translate(-35px,55px)}}@keyframes blob2{from{transform:translate(0,0)}to{transform:translate(45px,-35px)}}`}</style>
+        </div>
+      );
+    }
+
+    function BackBtn({ t, onClick, label = "Back" }) {
+      return (
+        <button onClick={onClick} style={{ display:"flex", alignItems:"center", gap:6, background:"none", border:`1px solid ${t.border}`, color:t.primary, borderRadius:10, padding:"7px 14px", cursor:"pointer", fontSize:14, marginBottom:18, fontWeight:600 }}>
+          <NeonIcon type="back" color={t.primary} size={16} /> {label}
+        </button>
+      );
+    }
+
+    function SectionTitle({ t, icon, label }) {
+      return (
+        <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16 }}>
+          <NeonIcon type={icon} color={t.primary} size={22} />
+          <span style={{ fontSize:19, fontWeight:800, color:t.text, letterSpacing:0.5 }}>{label}</span>
+          <div style={{ flex:1, height:1, background:`linear-gradient(to right, ${t.primary}60, transparent)`, boxShadow:`0 0 6px ${t.primary}` }} />
+        </div>
+      );
+    }
+
+    function HomeCard({ t, iconType, iconColor, title, desc, onClick }) {
+      const [hover, setHover] = useState(false);
+      return (
+        <div onClick={onClick}
+          onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+          style={{ background:t.card, border:`1px solid ${hover ? t.primary : t.border}`, borderRadius:16, padding:"16px 14px", cursor:"pointer", position:"relative", overflow:"hidden",
+            boxShadow: hover ? `0 8px 28px ${t.primary}30` : `0 0 14px ${t.glow}`,
+            transform: hover ? "translateY(-2px)" : "translateY(0)",
+            transition:"all 0.2s" }}>
+          <div style={{
+            width:44, height:44, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center",
+            background:`${iconColor || t.primary}18`, marginBottom:12
+          }}>
+            <NeonIcon type={iconType} color={iconColor || t.primary} size={22} />
+          </div>
+          <div style={{ fontWeight:700, fontSize:15.5, color:t.text, marginBottom:3 }}>{title}</div>
+          <div style={{ fontSize:12, color:t.sub, lineHeight:1.4, paddingRight:18 }}>{desc}</div>
+          <div style={{ position:"absolute", right:12, bottom:14, opacity: hover ? 1 : 0.5, transition:"opacity 0.2s" }}><NeonIcon type="arrow" color={t.primary} size={15} /></div>
+        </div>
+      );
+    }
+
+    function OptionBtn({ t, iconType, iconColor, label, onClick, disabled }) {
+      return (
+        <button onClick={disabled ? undefined : onClick} style={{
+          display:"flex", width:"100%", alignItems:"center", gap:12,
+          background:t.card, border:`1px solid ${disabled ? t.border+"55" : t.border}`,
+          color: disabled ? t.sub+"88" : t.text, borderRadius:14, padding:"13px 16px",
+          cursor: disabled ? "default" : "pointer", fontWeight:600, fontSize:15, marginBottom:11,
+          boxShadow:`0 0 10px ${t.glow}`, textAlign:"left", opacity: disabled ? 0.5 : 1,
+        }}>
+          {iconType && <NeonIcon type={iconType} color={disabled ? "#555" : (iconColor || t.primary)} size={22} />}
+          <span style={{ flex:1 }}>{label}</span>
+          {!disabled && <NeonIcon type="arrow" color={t.primary} size={16} />}
+        </button>
+      );
+    }
+
+    function UnitBtn({ t, label, url }) {
+      return (
+        <a href={url || "#"} target={url ? "_blank" : "_self"} rel="noopener noreferrer"
+          style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
+            background:t.card, border:`1px solid ${url ? t.border : t.border+"44"}`,
+            color: url ? t.primary : "#555", borderRadius:12, padding:"12px 16px",
+            textDecoration:"none", fontWeight:600, fontSize:15, marginBottom:9,
+            boxShadow:`0 0 8px ${t.glow}`, opacity: url ? 1 : 0.45 }}>
+          <span>{label}</span>
+          {url ? <NeonIcon type="arrow" color={t.primary} size={16}/> : <NeonIcon type="lock" color="#555" size={16}/>}
+        </a>
+      );
+    }
+
+    function ComingSoon({ t, onBack }) {
+      return (
+        <div style={{ textAlign:"center", padding:"60px 20px" }}>
+          <NeonIcon type="lock" color={t.primary} size={48} />
+          <div style={{ fontSize:22, fontWeight:800, color:t.primary, marginTop:16, marginBottom:8, textShadow:`0 0 14px ${t.primary}` }}>Coming Soon!</div>
+          <div style={{ color:t.sub, marginBottom:30 }}>This feature is under development.</div>
+          <BackBtn t={t} onClick={onBack} />
+        </div>
+      );
+    }
+
+    /* ─── SCHEDULE SCREEN ─── */
+    function ScheduleScreen({ t, onBack, userName }) {
+      const jsDay = new Date().getDay();
+      const todayIdx = jsDay === 0 ? 6 : jsDay - 1;
+      const [activeDay, setActiveDay] = useState(todayIdx);
+      const [tick, setTick] = useState(0);
+
+      const ACTIVE_SCHEDULE = userName === "prince" ? PRINCE_SCHEDULE : SCHEDULE;
+
+      function toggle(dayIdx, subIdx) {
+        const cur = getChecked(dayIdx, userName);
+        const pos = cur.indexOf(subIdx);
+        if (pos === -1) cur.push(subIdx); else cur.splice(pos, 1);
+        setChecked(dayIdx, userName, cur);
+        setTick(v => v + 1);
+      }
+
+      const dayKey = WEEK_DAYS[activeDay];
+      const subs = ACTIVE_SCHEDULE[dayKey];
+      const checked = getChecked(activeDay, userName);
+      const todayPct = getPct(todayIdx, userName);
+
+      return (
+        <div style={{ padding:"0 14px 20px" }}>
+          <div style={{ paddingTop:16, marginBottom:14 }}>
+            <BackBtn t={t} onClick={onBack} />
+            <SectionTitle t={t} icon="cal" label="Weekly Schedule" />
+          </div>
+
+          {/* Day Tabs */}
+          <div style={{ display:"flex", gap:7, overflowX:"auto", paddingBottom:10, marginBottom:18, scrollbarWidth:"none" }}>
+            {WEEK_DAYS.map((d, i) => {
+              const pct = getPct(i, userName);
+              const isActive = i === activeDay;
+              const isSun = i === 6;
+              const col = isSun ? "#00f5ff" : t.primary;
+              return (
+                <button key={d} onClick={() => setActiveDay(i)} style={{
+                  flexShrink:0, fontWeight:700, fontSize:11, letterSpacing:1,
+                  padding:"8px 13px", borderRadius:10, border:`1.5px solid ${isActive ? col : col+"33"}`,
+                  background: isActive ? `${col}18` : t.card, color: isActive ? col : t.sub,
+                  cursor:"pointer", boxShadow: isActive ? `0 0 12px ${col}44` : "none",
+                  textShadow: isActive ? `0 0 8px ${col}` : "none", outline:"none",
+                  transition:"all 0.2s"
+                }}>
+                  <div>{d}</div>
+                  {i !== 6 && <div style={{ fontSize:9, marginTop:2, color: pct===100 ? "#39ff14" : isActive ? col : "#555" }}>{pct}%</div>}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Day label */}
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
+            <span style={{ fontSize:15, fontWeight:700, color: activeDay===6?"#00f5ff":t.primary, textShadow:`0 0 8px ${activeDay===6?"#00f5ff":t.primary}`, letterSpacing:1 }}>
+              {WEEK_FULL[activeDay].toUpperCase()}{activeDay===todayIdx?" · TODAY":""}
+            </span>
+            <div style={{ flex:1, height:1, background:`linear-gradient(to right, ${activeDay===6?"#00f5ff":t.primary}60, transparent)` }} />
+          </div>
+
+          {/* Sunday */}
+          {activeDay === 6 ? (
+            <div style={{ background:"#00f5ff0c", border:"1.5px solid #00f5ff35", borderRadius:18, padding:"44px 20px", textAlign:"center", boxShadow:"0 0 28px #00f5ff18" }}>
+              <NeonIcon type="moon" color="#00f5ff" size={52} />
+              <div style={{ fontSize:20, fontWeight:800, color:"#00f5ff", textShadow:"0 0 14px #00f5ff", marginTop:14, marginBottom:6, letterSpacing:2 }}>FREE DAY</div>
+              <div style={{ color:"#00f5ffaa", fontSize:14 }}>Rest, recharge & reflect ✨</div>
+            </div>
+          ) : (
+            <div>
+              {subs.map((sub, i) => {
+                const isDone = checked.includes(i);
+                return (
+                  <div key={i} style={{
+                    background: t.card, border:`1px solid ${isDone ? sub.color+"55" : t.border}`,
+                    borderRadius:14, padding:"13px 14px", marginBottom:10,
+                    display:"flex", alignItems:"center", gap:12, position:"relative", overflow:"hidden",
+                    boxShadow: isDone ? `0 0 14px ${sub.color}22` : `0 0 8px ${t.glow}`,
+                    transition:"all 0.2s", opacity: isDone ? 0.65 : 1,
+                  }}>
+                    <div style={{ position:"absolute", left:0, top:0, bottom:0, width:3, background:sub.color, boxShadow:`0 0 8px ${sub.color}`, borderRadius:"3px 0 0 3px" }} />
+                    <div onClick={() => toggle(activeDay, i)} style={{
+                      width:28, height:28, borderRadius:8, border:`2px solid ${sub.color}`,
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      background: isDone ? sub.color : "transparent", cursor:"pointer", flexShrink:0,
+                      boxShadow: isDone ? `0 0 14px ${sub.color}, 0 0 26px ${sub.color}55` : `0 0 6px ${sub.color}55`,
+                      transition:"all 0.2s"
+                    }}>
+                      {isDone && <NeonIcon type="check" color="#fff" size={16} />}
+                    </div>
+                    <NeonIcon type={sub.icon} color={sub.color} size={26} />
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontWeight:700, fontSize:16, color: isDone ? "#888" : t.text, textDecoration: isDone ? "line-through" : "none" }}>{sub.name}</div>
+                      <div style={{ fontSize:11, color:sub.color, textShadow:`0 0 6px ${sub.color}`, letterSpacing:1, textTransform:"uppercase", marginTop:2 }}>{sub.tag}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Performance Chart */}
+          <div style={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:18, padding:"18px 14px", marginTop:24, boxShadow:`0 0 16px ${t.glow}` }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:16 }}>
+              <NeonIcon type="chart" color={t.primary} size={20} />
+              <span style={{ fontWeight:800, fontSize:14, color:t.primary, textShadow:`0 0 8px ${t.primary}`, letterSpacing:1.5, textTransform:"uppercase" }}>Performance Chart</span>
+            </div>
+
+            {todayIdx !== 6 && (
+              <div style={{ background:`${t.bg}88`, border:`1px solid ${t.border}`, borderRadius:12, padding:"12px 14px", marginBottom:16 }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+                  <span style={{ fontSize:12, color:t.sub, textTransform:"uppercase", letterSpacing:1 }}>Today's Progress</span>
+                  <span style={{ fontWeight:800, fontSize:18, color:"#39ff14", textShadow:"0 0 10px #39ff14" }}>{todayPct}%</span>
+                </div>
+                <div style={{ height:10, background:"#1a0030", borderRadius:10, overflow:"hidden" }}>
+                  <div style={{ height:"100%", width:`${todayPct}%`, borderRadius:10, background:`linear-gradient(90deg, ${t.primary}, #00f5ff)`, boxShadow:`0 0 10px ${t.primary}, 0 0 20px #00f5ff55`, transition:"width 0.6s ease" }} />
+                </div>
+              </div>
+            )}
+
+            <div style={{ display:"flex", alignItems:"flex-end", gap:8, height:110, padding:"0 4px" }}>
+              {WEEK_DAYS.map((d, i) => {
+                const pct = getPct(i, userName);
+                const isSun = i === 6;
+                const col = isSun ? "#00f5ff" : (i < 3 ? t.primary : "#00bfff");
+                const barH = Math.max(4, Math.round((pct / 100) * 80));
+                const isT = i === todayIdx;
+                return (
+                  <div key={d} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:4, height:"100%" }}>
+                    <div style={{ fontSize:9, fontWeight:700, color: pct===100 ? "#39ff14" : "#777", letterSpacing:0.5 }}>
+                      {isSun ? "🌙" : pct + "%"}
+                    </div>
+                    <div style={{ flex:1, width:"100%", display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
+                      <div style={{ width:"100%", maxWidth:30, height:barH, borderRadius:"6px 6px 0 0",
+                        background:`linear-gradient(to top, ${col}, ${col}44)`,
+                        boxShadow:`0 0 10px ${col}88`, transition:"height 0.5s ease" }} />
+                    </div>
+                    <div style={{ fontSize:9, fontWeight:700, color: isT ? t.primary : "#555", textShadow: isT ? `0 0 6px ${t.primary}` : "none", letterSpacing:0.5, textTransform:"uppercase" }}>{d}</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginTop:14 }}>
+              {(() => {
+                let streak = 0;
+                for (let i = 0; i < 6; i++) { if (getPct(i, userName) === 100) streak++; else if (i < todayIdx) streak = 0; }
+                const total = Array.from({length:6},(_,i)=>getPct(i, userName)).filter(p=>p===100).length;
+                return [
+                  <div key="s" style={{ background:`#39ff1412`, border:`1px solid #39ff1440`, borderRadius:20, padding:"5px 12px", fontSize:12, color:"#39ff14", fontWeight:700, textShadow:"0 0 6px #39ff14" }}>🔥 {streak} Day Streak</div>,
+                  <div key="t" style={{ background:`${t.primary}12`, border:`1px solid ${t.border}`, borderRadius:20, padding:"5px 12px", fontSize:12, color:t.primary, fontWeight:700 }}>✅ {total}/6 Days Done</div>,
+                ];
+              })()}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ─── LOVE DIARY SCREEN ─── */
+    function LoveDiaryScreen({ t, userName, onBack }) {
+      const storageKey = `love_diary_${userName}`;
+      const [entries, setEntries] = useState(() => {
+        try { return JSON.parse(localStorage.getItem(storageKey)) || []; } catch { return []; }
+      });
+      const [writing, setWriting] = useState(false);
+      const [text, setText] = useState("");
+      const [title, setTitle] = useState("");
+      const [viewEntry, setViewEntry] = useState(null);
+
+      function saveEntry() {
+        if (!text.trim()) return;
+        const now = new Date();
+        const dateStr = now.toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric" });
+        const timeStr = now.toLocaleTimeString("en-IN", { hour:"2-digit", minute:"2-digit" });
+        const newEntry = { id: Date.now(), title: title.trim() || "A Beautiful Memory", date: dateStr, time: timeStr, text: text.trim() };
+        const updated = [newEntry, ...entries];
+        localStorage.setItem(storageKey, JSON.stringify(updated));
+        setEntries(updated);
+        setText(""); setTitle(""); setWriting(false);
+      }
+
+      function deleteEntry(id) {
+        const updated = entries.filter(e => e.id !== id);
+        localStorage.setItem(storageKey, JSON.stringify(updated));
+        setEntries(updated);
+        setViewEntry(null);
+      }
+
+      const heartColor = userName === "neha" ? "#ff2d78" : "#2d8fff";
+
+      // View single entry
+      if (viewEntry) {
+        return (
+          <div style={{ padding:"20px 16px" }}>
+            <BackBtn t={t} onClick={() => setViewEntry(null)} label="All Memories" />
+            <div style={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:18, padding:"20px 18px", boxShadow:`0 0 18px ${t.glow}` }}>
+              <div style={{ fontSize:22, fontWeight:800, color:t.primary, marginBottom:6, textShadow:`0 0 10px ${t.primary}88` }}>{viewEntry.title}</div>
+              <div style={{ fontSize:12, color:t.sub, marginBottom:18, letterSpacing:0.5 }}>{viewEntry.date} · {viewEntry.time}</div>
+              <div style={{ color:t.text, fontSize:15, lineHeight:1.8, whiteSpace:"pre-wrap" }}>{viewEntry.text}</div>
+            </div>
+            <button onClick={() => deleteEntry(viewEntry.id)} style={{ marginTop:18, width:"100%", background:"none", border:"1px solid #ff4444", color:"#ff4444", borderRadius:12, padding:11, cursor:"pointer", fontWeight:600, fontSize:14 }}>🗑️ Delete this memory</button>
+          </div>
+        );
+      }
+
+      // Write new entry
+      if (writing) {
+        return (
+          <div style={{ padding:"20px 16px" }}>
+            <BackBtn t={t} onClick={() => { setWriting(false); setText(""); setTitle(""); }} />
+            <SectionTitle t={t} icon="hv" label="Write a Memory" />
+            <input
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="Give it a title... 💭"
+              style={{ width:"100%", background:t.card, border:`1px solid ${t.border}`, color:t.text, borderRadius:12, padding:"12px 14px", fontSize:15, fontWeight:600, marginBottom:12, outline:"none", fontFamily:"'Segoe UI', sans-serif", boxShadow:`0 0 8px ${t.glow}` }}
+            />
+            <textarea
+              value={text}
+              onChange={e => setText(e.target.value)}
+              placeholder="Write your beautiful memory here... How was your day? What made you smile? 🌸"
+              rows={10}
+              style={{ width:"100%", background:t.card, border:`1px solid ${t.border}`, color:t.text, borderRadius:12, padding:"12px 14px", fontSize:14, lineHeight:1.8, resize:"none", outline:"none", fontFamily:"'Segoe UI', sans-serif", boxShadow:`0 0 8px ${t.glow}` }}
+            />
+            <button onClick={saveEntry} style={{ marginTop:14, width:"100%", background:`linear-gradient(135deg, ${t.primary}, ${t.secondary})`, border:"none", color:"#fff", borderRadius:14, padding:"14px", cursor:"pointer", fontSize:16, fontWeight:800, boxShadow:`0 0 18px ${t.primary}55`, letterSpacing:0.5 }}>
+              💾 Save Memory
+            </button>
+          </div>
+        );
+      }
+
+      // Main diary list
+      return (
+        <div style={{ padding:"20px 16px" }}>
+          <BackBtn t={t} onClick={onBack} />
+          <SectionTitle t={t} icon="hv" label="Love Diary" />
+
+          {/* Write button */}
+          <button onClick={() => setWriting(true)} style={{ width:"100%", background:`linear-gradient(135deg, ${t.primary}22, ${t.card})`, border:`1.5px dashed ${t.primary}`, color:t.primary, borderRadius:16, padding:"16px", cursor:"pointer", fontSize:15, fontWeight:700, marginBottom:20, boxShadow:`0 0 12px ${t.primary}22`, textShadow:`0 0 8px ${t.primary}88`, display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
+            <span style={{ fontSize:22 }}>✍️</span> Write Today's Memory
+          </button>
+
+          {entries.length === 0 ? (
+            <div style={{ textAlign:"center", padding:"50px 20px", color:t.sub }}>
+              <div style={{ fontSize:48, marginBottom:14 }}>💝</div>
+              <div style={{ fontSize:16, fontWeight:700, color:t.primary, marginBottom:8 }}>No memories yet</div>
+              <div style={{ fontSize:13 }}>Start writing your beautiful moments!</div>
+            </div>
+          ) : (
+            entries.map(e => (
+              <div key={e.id} onClick={() => setViewEntry(e)} style={{
+                background:t.card, border:`1px solid ${t.border}`, borderRadius:16,
+                padding:"14px 16px", marginBottom:12, cursor:"pointer",
+                boxShadow:`0 0 10px ${t.glow}`, transition:"all 0.2s",
+                position:"relative", overflow:"hidden"
+              }}>
+                <div style={{ position:"absolute", left:0, top:0, bottom:0, width:3, background:heartColor, boxShadow:`0 0 8px ${heartColor}`, borderRadius:"3px 0 0 3px" }} />
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+                  <div style={{ fontWeight:700, fontSize:15, color:t.text, marginBottom:4, flex:1, paddingRight:8 }}>{e.title}</div>
+                  <NeonIcon type="arrow" color={t.primary} size={16} />
+                </div>
+                <div style={{ fontSize:11, color:t.sub, letterSpacing:0.5 }}>{e.date} · {e.time}</div>
+                <div style={{ fontSize:13, color:t.sub, marginTop:6, lineHeight:1.5, overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>{e.text}</div>
+              </div>
+            ))
+          )}
+        </div>
+      );
+    }
+
+    /* ─── ACHIEVEMENTS SCREEN ─── */
+    function AchievementsScreen({ t, onBack }) {
+      const goals = [
+        { date:"7 June",   reward:"Mystery Reward",            emoji:"🎁" },
+        { date:"14 June",  reward:"Ice Cream",                 emoji:"🍦" },
+        { date:"21 June",  reward:"Dosa & Veg Noodles + Mojito", emoji:"🥤" },
+        { date:"28 June",  reward:"BlackForest Cake 500g",     emoji:"🎂" },
+        { date:"5 July",   reward:"Cadbury Chocolate Box",     emoji:"🍫" },
+        { date:"12 July",  reward:"Dark Fantasy Doracake",     emoji:"🍩" },
+      ];
+
+      const [achieved, setAchieved] = useState(() => {
+        try { return JSON.parse(localStorage.getItem("neha_achievements")) || []; } catch { return []; }
+      });
+
+      function toggleAchieve(i) {
+        const cur = [...achieved];
+        const pos = cur.indexOf(i);
+        if (pos === -1) cur.push(i); else cur.splice(pos, 1);
+        localStorage.setItem("neha_achievements", JSON.stringify(cur));
+        setAchieved(cur);
+      }
+
+      const doneCount = achieved.length;
+
+      return (
+        <div style={{ padding:"20px 16px" }}>
+          <BackBtn t={t} onClick={onBack} />
+          <SectionTitle t={t} icon="trophy" label="Achievements" />
+
+          {/* Progress banner */}
+          <div style={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:16, padding:"14px 18px", marginBottom:20, boxShadow:`0 0 16px ${t.glow}`, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <div>
+              <div style={{ color:t.sub, fontSize:12, letterSpacing:1, textTransform:"uppercase", marginBottom:4 }}>Goals Achieved</div>
+              <div style={{ fontSize:26, fontWeight:900, color:t.primary, textShadow:`0 0 14px ${t.primary}` }}>{doneCount} / {goals.length}</div>
+            </div>
+            <div style={{ fontSize:36 }}>{doneCount === goals.length ? "🏆" : "⭐"}</div>
+          </div>
+
+          {/* Goal cards */}
+          {goals.map((g, i) => {
+            const isDone = achieved.includes(i);
+            return (
+              <div key={i} style={{
+                background: isDone ? `${t.primary}14` : t.card,
+                border:`1.5px solid ${isDone ? t.primary : t.border}`,
+                borderRadius:16, padding:"14px 16px", marginBottom:12,
+                display:"flex", alignItems:"center", gap:14,
+                boxShadow: isDone ? `0 0 18px ${t.primary}30` : `0 0 8px ${t.glow}`,
+                transition:"all 0.3s", opacity: isDone ? 0.75 : 1,
+                position:"relative", overflow:"hidden"
+              }}>
+                <div style={{ position:"absolute", left:0, top:0, bottom:0, width:3, background: isDone ? t.primary : t.border, boxShadow: isDone ? `0 0 8px ${t.primary}` : "none", borderRadius:"3px 0 0 3px", transition:"all 0.3s" }} />
+                <div style={{ fontSize:28, flexShrink:0 }}>{g.emoji}</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:12, color:t.sub, letterSpacing:1, textTransform:"uppercase", marginBottom:3 }}>{g.date}</div>
+                  <div style={{ fontSize:15, fontWeight:700, color: isDone ? "#aaa" : t.text, textDecoration: isDone ? "line-through" : "none" }}>{g.reward}</div>
+                </div>
+                <div onClick={() => toggleAchieve(i)} style={{
+                  width:32, height:32, borderRadius:10, border:`2px solid ${isDone ? t.primary : "#555"}`,
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  background: isDone ? t.primary : "transparent", cursor:"pointer", flexShrink:0,
+                  boxShadow: isDone ? `0 0 14px ${t.primary}, 0 0 28px ${t.primary}55` : "none",
+                  transition:"all 0.25s"
+                }}>
+                  {isDone && <NeonIcon type="check" color="#fff" size={18} />}
+                </div>
+              </div>
+            );
+          })}
+
+          {doneCount === goals.length && (
+            <div style={{ textAlign:"center", marginTop:10, padding:"18px", background:`${t.primary}10`, border:`1px solid ${t.primary}40`, borderRadius:16 }}>
+              <div style={{ fontSize:32 }}>🏆</div>
+              <div style={{ color:t.primary, fontWeight:800, fontSize:16, marginTop:8, textShadow:`0 0 10px ${t.primary}` }}>All Goals Achieved! Amazing Neha! 💕</div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+
+    /* ─── ICONS for chat/call ─── */
+    function PhoneIcon({color,size=24}){return(<svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{filter:`drop-shadow(0 0 6px ${color})`}}><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z" stroke={color} strokeWidth="1.8" strokeLinejoin="round"/></svg>);}
+    function VideoIcon({color,size=24}){return(<svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{filter:`drop-shadow(0 0 6px ${color})`}}><rect x="2" y="6" width="13" height="12" rx="2" stroke={color} strokeWidth="1.8"/><path d="M15 9.5l5-3v11l-5-3v-5z" stroke={color} strokeWidth="1.8" strokeLinejoin="round"/></svg>);}
+    function MsgIcon({color,size=24}){return(<svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{filter:`drop-shadow(0 0 6px ${color})`}}><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke={color} strokeWidth="1.8" strokeLinejoin="round"/></svg>);}
+    function MicOffIcon({color,size=24}){return(<svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{filter:`drop-shadow(0 0 6px ${color})`}}><path d="M1 1l22 22M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6M17 16.95A7 7 0 015 12v-2m14 0v2a7 7 0 01-.11 1.23M12 19v3M8 23h8" stroke={color} strokeWidth="1.8" strokeLinecap="round"/></svg>);}
+    function EndCallIcon({color,size=24}){return(<svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{filter:`drop-shadow(0 0 6px ${color})`}}><path d="M10.68 13.31a16 16 0 003.41 2.6l1.27-1.27a2 2 0 012.11-.45c1.12.45 2.3.7 3.53.7a2 2 0 012 2V20a2 2 0 01-2 2C9.4 22 2 14.6 2 5.5a2 2 0 012-2H7a2 2 0 012 2c0 1.25.25 2.45.7 3.57a2 2 0 01-.45 2.1L8.09 10.3" stroke={color} strokeWidth="1.8" strokeLinecap="round"/><line x1="1" y1="1" x2="23" y2="23" stroke={color} strokeWidth="1.8" strokeLinecap="round"/></svg>);}
+
+    /* ─── STORAGE HELPERS ─── */
+    const STORAGE_KEY = "studyhub_chat_v2";
+    function loadMessages() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
+    }
+    function saveMessages(msgs) {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(msgs.slice(-200))); } catch {}
+    }
+    const MISSED_KEY = "studyhub_missed_v2";
+    function loadMissed() {
+      try { return JSON.parse(localStorage.getItem(MISSED_KEY) || "[]"); } catch { return []; }
+    }
+    function saveMissed(arr) {
+      try { localStorage.setItem(MISSED_KEY, JSON.stringify(arr.slice(-20))); } catch {}
+    }
+
+    /* ─── CONNECT SCREEN ─── */
+    function ConnectScreen({ t, userName, onBack }) {
+      const otherUser = userName === "neha" ? "prince" : "neha";
+      const otherName = userName === "neha" ? "Prince" : "Neha";
+      const myPeerId  = userName === "neha" ? "studyhub-neha-peer-x7" : "studyhub-prince-peer-x7";
+      const othPeerId = userName === "neha" ? "studyhub-prince-peer-x7" : "studyhub-neha-peer-x7";
+      const myColor   = t.primary;
+      const othColor  = userName === "neha" ? "#2d8fff" : "#ff2d78";
+
+      const [tab, setTab]           = useState("chat"); // "chat"|"missed"
+      const [messages, setMessages] = useState(() => loadMessages());
+      const [missed, setMissed]     = useState(() => loadMissed());
+      const [input, setInput]       = useState("");
+      const [editId, setEditId]     = useState(null);
+      const [editText, setEditText] = useState("");
+      const [peer, setPeer]         = useState(null);
+      const [conn, setConn]         = useState(null);
+      const [callState, setCallState] = useState("idle"); // idle|calling|ringing|incall
+      const [callType, setCallType]   = useState(null);   // "audio"|"video"
+      const [localStream, setLocalStream] = useState(null);
+      const [remoteStream, setRemoteStream] = useState(null);
+      const [muted, setMuted]       = useState(false);
+      const [camOff, setCamOff]     = useState(false);
+      const [peerStatus, setPeerStatus] = useState("connecting"); // connecting|online|offline
+      const [activeCall, setActiveCall] = useState(null);
+      const [incomingCall, setIncomingCall] = useState(null);
+      const [callTimer, setCallTimer]   = useState(0);
+      const [mediaFile, setMediaFile]   = useState(null);
+
+      const msgEndRef   = useRef(null);
+      const localVidRef = useRef(null);
+      const remoteVidRef= useRef(null);
+      const timerRef    = useRef(null);
+      const peerRef     = useRef(null);
+      const connRef     = useRef(null);
+
+      /* scroll to bottom */
+      useEffect(() => { msgEndRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages]);
+
+      /* attach video streams */
+      useEffect(() => {
+        if (localVidRef.current && localStream) localVidRef.current.srcObject = localStream;
+      }, [localStream]);
+      useEffect(() => {
+        if (remoteVidRef.current && remoteStream) remoteVidRef.current.srcObject = remoteStream;
+      }, [remoteStream]);
+
+      /* call timer */
+      useEffect(() => {
+        if (callState === "incall") {
+          timerRef.current = setInterval(() => setCallTimer(v => v+1), 1000);
+        } else {
+          clearInterval(timerRef.current);
+          setCallTimer(0);
+        }
+        return () => clearInterval(timerRef.current);
+      }, [callState]);
+
+      /* ─── PEER SETUP ─── */
+      useEffect(() => {
+        let p;
+        try {
+          p = new Peer(myPeerId, {
+            debug: 0,
+            config: {
+              iceServers: [
+                { urls: "stun:stun.l.google.com:19302" },
+                { urls: "stun:stun1.l.google.com:19302" },
+                { urls: "stun:stun.cloudflare.com:3478" },
+              ]
+            }
+          });
+        } catch(e) {
+          setPeerStatus("offline"); return;
+        }
+        peerRef.current = p;
+        setPeer(p);
+
+        p.on("open", () => {
+          setPeerStatus("online");
+          /* try connect to other */
+          tryConnect(p);
+        });
+
+        p.on("error", () => { setPeerStatus("offline"); });
+
+        p.on("connection", (c) => {
+          connRef.current = c;
+          setConn(c);
+          setupConn(c);
+        });
+
+        p.on("call", (inCall) => {
+          const ctype = inCall.metadata?.type || "audio";
+          setIncomingCall(inCall);
+          setCallType(ctype);
+          setCallState("ringing");
+          /* log missed if ignored after 30s */
+          const missTimeout = setTimeout(() => {
+            if (callState !== "incall") {
+              logMissed(otherName, ctype);
+              inCall.close();
+              setCallState("idle");
+              setIncomingCall(null);
+            }
+          }, 30000);
+          inCall._missTimeout = missTimeout;
+        });
+
+        return () => { p.destroy(); };
+      }, []);
+
+      function tryConnect(p) {
+        const c = p.connect(othPeerId, { reliable: true });
+        connRef.current = c;
+        setConn(c);
+        setupConn(c);
+      }
+
+      function setupConn(c) {
+        c.on("data", (data) => {
+          if (data.type === "msg") {
+            setMessages(prev => {
+              const next = [...prev, data.msg];
+              saveMessages(next);
+              return next;
+            });
+          } else if (data.type === "delete") {
+            setMessages(prev => {
+              const next = prev.filter(m => m.id !== data.id);
+              saveMessages(next);
+              return next;
+            });
+          } else if (data.type === "edit") {
+            setMessages(prev => {
+              const next = prev.map(m => m.id === data.id ? {...m, text:data.text, edited:true} : m);
+              saveMessages(next);
+              return next;
+            });
+          }
+        });
+        c.on("open", () => setPeerStatus("online"));
+        c.on("close", () => setPeerStatus("offline"));
+        c.on("error", () => {});
+      }
+
+      function sendData(data) {
+        try {
+          if (connRef.current && connRef.current.open) {
+            connRef.current.send(data);
+            return true;
+          }
+        } catch(e) {}
+        return false;
+      }
+
+      function logMissed(from, type) {
+        const entry = { id: Date.now(), from, type, time: new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) };
+        setMissed(prev => { const next = [...prev, entry]; saveMissed(next); return next; });
+      }
+
+      /* ─── SEND MESSAGE ─── */
+      function sendMessage(text, fileInfo) {
+        if (!text.trim() && !fileInfo) return;
+        const msg = {
+          id: Date.now() + Math.random(),
+          from: userName,
+          text: text.trim(),
+          file: fileInfo || null,
+          time: new Date().toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" }),
+          edited: false
+        };
+        setMessages(prev => { const next=[...prev,msg]; saveMessages(next); return next; });
+        sendData({ type:"msg", msg });
+        setInput("");
+        setMediaFile(null);
+      }
+
+      /* ─── FILE SEND ─── */
+      const galleryRef = useRef(null);
+      const fileRef    = useRef(null);
+
+      function handleFile(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = ""; // reset so same file can be picked again
+        const MAX = 5 * 1024 * 1024; // 5MB limit
+        if (file.size > MAX) { alert("File too large! Max 5MB."); return; }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const fileInfo = { name:file.name, type:file.type, size:file.size, data:ev.target.result };
+          sendMessage("", fileInfo);
+        };
+        reader.readAsDataURL(file);
+      }
+
+      /* ─── EDIT ─── */
+      function startEdit(msg) { setEditId(msg.id); setEditText(msg.text); }
+      function submitEdit() {
+        if (!editText.trim()) return;
+        setMessages(prev => {
+          const next = prev.map(m => m.id===editId ? {...m,text:editText,edited:true} : m);
+          saveMessages(next); return next;
+        });
+        sendData({ type:"edit", id:editId, text:editText });
+        setEditId(null); setEditText("");
+      }
+
+      /* ─── DELETE ─── */
+      function deleteMsg(id) {
+        setMessages(prev => { const next=prev.filter(m=>m.id!==id); saveMessages(next); return next; });
+        sendData({ type:"delete", id });
+      }
+
+      /* ─── CALL ─── */
+      const AUDIO_CONSTRAINTS = {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        sampleRate: 16000,
+        channelCount: 1,
+        latency: 0.01,
+      };
+
+      async function startCall(type) {
+        try {
+          const constraints = type === "video"
+            ? { video: { width:{ideal:640}, height:{ideal:480}, frameRate:{ideal:15,max:24} }, audio: AUDIO_CONSTRAINTS }
+            : { audio: AUDIO_CONSTRAINTS, video: false };
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          // Apply Web Audio API processing for cleaner sound
+          let finalStream = stream;
+          if (type === "audio") {
+            try {
+              const ctx = new AudioContext();
+              const src = ctx.createMediaStreamSource(stream);
+              const dst = ctx.createMediaStreamDestination();
+              const comp = ctx.createDynamicsCompressor();
+              comp.threshold.value = -24; comp.knee.value = 12;
+              comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.15;
+              const gain = ctx.createGain(); gain.gain.value = 1.4;
+              src.connect(comp); comp.connect(gain); gain.connect(dst);
+              finalStream = new MediaStream([...dst.stream.getAudioTracks(), ...stream.getVideoTracks()]);
+            } catch(ex) { finalStream = stream; }
+          }
+          setLocalStream(stream);
+          setCallType(type);
+          setCallState("calling");
+          const call = peerRef.current.call(othPeerId, finalStream, { metadata:{ type } });
+          setActiveCall(call);
+          call.on("stream", (remote) => { setRemoteStream(remote); setCallState("incall"); });
+          call.on("close", () => endCallCleanup());
+          call.on("error", () => endCallCleanup());
+        } catch(e) {
+          const msg = e.name === "NotAllowedError"
+            ? "🎤 Mic/Camera permission denied.\n\nSteps to allow:\n1. Tap the 🔒 lock icon in browser address bar\n2. Set Microphone → Allow\n3. Reload and try again"
+            : e.name === "NotFoundError"
+            ? "No mic/camera found on this device."
+            : "Could not start call: " + e.message;
+          alert(msg);
+        }
+      }
+
+      async function answerCall() {
+        clearTimeout(incomingCall?._missTimeout);
+        try {
+          const constraints = callType === "video"
+            ? { video: { width:{ideal:640}, height:{ideal:480}, frameRate:{ideal:15,max:24} }, audio: AUDIO_CONSTRAINTS }
+            : { audio: AUDIO_CONSTRAINTS, video: false };
+          const stream = await navigator.mediaDevices.getUserMedia(constraints);
+          setLocalStream(stream);
+          incomingCall.answer(stream);
+          incomingCall.on("stream", (remote) => { setRemoteStream(remote); setCallState("incall"); });
+          incomingCall.on("close", () => endCallCleanup());
+          setActiveCall(incomingCall);
+          setIncomingCall(null);
+          setCallState("incall");
+        } catch(e) {
+          const msg = e.name === "NotAllowedError"
+            ? "🎤 Permission denied.\n\nAllow mic/camera:\n1. Tap 🔒 in browser address bar\n2. Microphone → Allow\n3. Reload page"
+            : "Could not access mic/camera: " + e.message;
+          alert(msg);
+          setCallState("idle"); setIncomingCall(null);
+        }
+      }
+
+      function rejectCall() {
+        clearTimeout(incomingCall?._missTimeout);
+        logMissed(otherName, callType);
+        incomingCall?.close();
+        setIncomingCall(null);
+        setCallState("idle");
+      }
+
+      function endCallCleanup() {
+        localStream?.getTracks().forEach(t => t.stop());
+        activeCall?.close();
+        setLocalStream(null); setRemoteStream(null);
+        setActiveCall(null); setIncomingCall(null);
+        setCallState("idle"); setCallType(null);
+        setMuted(false); setCamOff(false);
+      }
+
+      function toggleMute() {
+        if (localStream) {
+          localStream.getAudioTracks().forEach(t => { t.enabled = !t.enabled; });
+          setMuted(m => !m);
+        }
+      }
+      function toggleCam() {
+        if (localStream) {
+          localStream.getVideoTracks().forEach(t => { t.enabled = !t.enabled; });
+          setCamOff(c => !c);
+        }
+      }
+
+      function fmtTimer(s) {
+        const m = Math.floor(s/60).toString().padStart(2,"0");
+        const sec = (s%60).toString().padStart(2,"0");
+        return `${m}:${sec}`;
+      }
+
+      /* ─── CALL UI ─── */
+      if (callState !== "idle") {
+        return (
+          <div style={{ position:"fixed", inset:0, background:"#04000c", zIndex:200, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Segoe UI', sans-serif" }}>
+            {/* Hidden audio element for remote audio on audio calls */}
+            {callType === "audio" && remoteStream && (
+              <audio ref={el => { if(el && remoteStream) { el.srcObject = remoteStream; el.play().catch(()=>{}); } }} autoPlay playsInline style={{ display:"none" }}/>
+            )}
+            {/* video streams */}
+            {callType === "video" && (
+              <div style={{ position:"absolute", inset:0, background:"#000", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <video ref={remoteVidRef} autoPlay playsInline style={{ width:"100%", height:"100%", objectFit:"cover", opacity: remoteStream?1:0 }}/>
+                <video ref={localVidRef} autoPlay playsInline muted style={{ position:"absolute", bottom:100, right:16, width:100, height:140, borderRadius:12, objectFit:"cover", border:`2px solid ${myColor}`, boxShadow:`0 0 14px ${myColor}` }}/>
+              </div>
+            )}
+
+            <div style={{ position:"relative", zIndex:10, textAlign:"center", padding:30 }}>
+              {/* Avatar */}
+              <div style={{ width:90, height:90, borderRadius:"50%", background:`linear-gradient(135deg,${othColor},${othColor}88)`, margin:"0 auto 16px", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:`0 0 30px ${othColor}66`, animation: callState==="ringing"?"pulse 1s infinite":"none" }}>
+                <span style={{ fontSize:36 }}>{otherUser==="neha"?"👩":"👨"}</span>
+              </div>
+              <div style={{ fontSize:24, fontWeight:800, color:"#fff", marginBottom:4 }}>{otherName}</div>
+              <div style={{ color:"#aaa", fontSize:15, marginBottom:30 }}>
+                {callState==="calling" ? "Calling..." : callState==="ringing" ? `Incoming ${callType} call...` : fmtTimer(callTimer)}
+              </div>
+
+              {/* Ringing buttons */}
+              {callState === "ringing" && (
+                <div style={{ display:"flex", gap:40, justifyContent:"center" }}>
+                  <button onClick={rejectCall} style={{ width:70, height:70, borderRadius:"50%", background:"#ff2222", border:"none", cursor:"pointer", boxShadow:"0 0 20px #ff222288", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <EndCallIcon color="#fff" size={30}/>
+                  </button>
+                  <button onClick={answerCall} style={{ width:70, height:70, borderRadius:"50%", background:"#22cc44", border:"none", cursor:"pointer", boxShadow:"0 0 20px #22cc4488", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <PhoneIcon color="#fff" size={30}/>
+                  </button>
+                </div>
+              )}
+
+              {/* In-call / Calling buttons */}
+              {(callState === "incall" || callState === "calling") && (
+                <div style={{ display:"flex", gap:18, justifyContent:"center", flexWrap:"wrap" }}>
+                  <button onClick={toggleMute} style={{ width:60, height:60, borderRadius:"50%", background: muted?"#555":"#ffffff15", border:`2px solid ${muted?"#ff4444":myColor}`, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    {muted ? <MicOffIcon color="#ff4444" size={24}/> : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{filter:`drop-shadow(0 0 6px ${myColor})`}}><rect x="9" y="2" width="6" height="11" rx="3" stroke={myColor} strokeWidth="1.8"/><path d="M5 10a7 7 0 0014 0M12 19v3M8 22h8" stroke={myColor} strokeWidth="1.8" strokeLinecap="round"/></svg>}
+                  </button>
+                  {callType==="video" && (
+                    <button onClick={toggleCam} style={{ width:60, height:60, borderRadius:"50%", background: camOff?"#555":"#ffffff15", border:`2px solid ${camOff?"#ff4444":myColor}`, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                      <VideoIcon color={camOff?"#ff4444":myColor} size={24}/>
+                    </button>
+                  )}
+                  <button onClick={endCallCleanup} style={{ width:60, height:60, borderRadius:"50%", background:"#ff2222", border:"none", cursor:"pointer", boxShadow:"0 0 20px #ff222266", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <EndCallIcon color="#fff" size={24}/>
+                  </button>
+                </div>
+              )}
+            </div>
+            <style>{`@keyframes pulse{0%,100%{box-shadow:0 0 30px ${othColor}66}50%{box-shadow:0 0 50px ${othColor}cc}}`}</style>
+          </div>
+        );
+      }
+
+      /* ─── CHAT UI ─── */
+      return (
+        <div style={{ display:"flex", flexDirection:"column", height:"100vh", maxHeight:"100vh", fontFamily:"'Segoe UI', sans-serif", background:t.bg, overflow:"hidden" }}>
+          {/* Header */}
+          <div style={{ background:`${t.bg}f0`, backdropFilter:"blur(14px)", borderBottom:`1px solid ${t.border}`, padding:"10px 14px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
+            <button onClick={onBack} style={{ background:"none", border:"none", cursor:"pointer", padding:4 }}>
+              <NeonIcon type="back" color={t.primary} size={22}/>
+            </button>
+            <div style={{ width:40, height:40, borderRadius:"50%", background:`linear-gradient(135deg,${othColor},${othColor}66)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, flexShrink:0 }}>
+              {otherUser==="neha"?"👩":"👨"}
+            </div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontWeight:800, fontSize:16, color:t.text }}>{otherName}</div>
+              <div style={{ fontSize:11, color: peerStatus==="online"?"#39ff14": peerStatus==="connecting"?"#ffe600":"#ff4444", fontWeight:600 }}>
+                {peerStatus==="online"?"● Online": peerStatus==="connecting"?"● Connecting...":"● Offline"}
+              </div>
+            </div>
+            {/* Call buttons */}
+            <button onClick={() => startCall("audio")} style={{ background:"#22cc4415", border:"1px solid #22cc44", borderRadius:10, padding:"8px 10px", cursor:"pointer" }}>
+              <PhoneIcon color="#22cc44" size={20}/>
+            </button>
+            <button onClick={() => startCall("video")} style={{ background:`${t.primary}15`, border:`1px solid ${t.primary}`, borderRadius:10, padding:"8px 10px", cursor:"pointer" }}>
+              <VideoIcon color={t.primary} size={20}/>
+            </button>
+          </div>
+
+          {/* Tab bar */}
+          <div style={{ display:"flex", borderBottom:`1px solid ${t.border}`, flexShrink:0 }}>
+            {[["chat","💬 Chat"],["missed","📵 Missed Calls"]].map(([key,label]) => (
+              <button key={key} onClick={() => setTab(key)} style={{ flex:1, padding:"10px 0", background:tab===key?`${t.primary}15`:"none", border:"none", color:tab===key?t.primary:"#666", fontWeight:tab===key?700:400, fontSize:13, cursor:"pointer", borderBottom:tab===key?`2px solid ${t.primary}`:"2px solid transparent", transition:"all 0.2s" }}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {tab === "missed" ? (
+            <div style={{ flex:1, overflowY:"auto", padding:16 }}>
+              {missed.length === 0 ? (
+                <div style={{ textAlign:"center", color:"#555", marginTop:40 }}>No missed calls</div>
+              ) : [...missed].reverse().map(m => (
+                <div key={m.id} style={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:12, padding:"12px 14px", marginBottom:10, display:"flex", alignItems:"center", gap:12 }}>
+                  <div style={{ color:"#ff4444", fontSize:20 }}>📵</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:t.text, fontWeight:600 }}>Missed {m.type} call from {m.from}</div>
+                    <div style={{ color:"#666", fontSize:12 }}>{m.time}</div>
+                  </div>
+                  {m.type==="audio" ? <PhoneIcon color="#ff4444" size={18}/> : <VideoIcon color="#ff4444" size={18}/>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {/* Messages */}
+              <div style={{ flex:1, overflowY:"auto", padding:"12px 12px 0", display:"flex", flexDirection:"column", gap:6 }}>
+                {messages.length === 0 && (
+                  <div style={{ textAlign:"center", color:"#444", marginTop:40, fontSize:14 }}>
+                    <div style={{ fontSize:36, marginBottom:8 }}>💬</div>
+                    Send a message to {otherName}!
+                  </div>
+                )}
+                {messages.map(msg => {
+                  const isMe = msg.from === userName;
+                  return (
+                    <div key={msg.id} style={{ display:"flex", flexDirection:"column", alignItems: isMe?"flex-end":"flex-start" }}>
+                      <div style={{ maxWidth:"78%", background: isMe?`${myColor}22`:`${othColor}18`, border:`1px solid ${isMe?myColor:othColor}44`, borderRadius: isMe?"16px 16px 4px 16px":"16px 16px 16px 4px", padding:"10px 13px", boxShadow:`0 0 8px ${isMe?myColor:othColor}18` }}>
+                        {/* File attachment */}
+                        {msg.file && (
+                          <div style={{ marginBottom: msg.text?8:0 }}>
+                            {msg.file.type?.startsWith("image/") ? (
+                              <img src={msg.file.data} alt={msg.file.name} style={{ maxWidth:"100%", maxHeight:200, borderRadius:8, display:"block" }}/>
+                            ) : msg.file.type === "application/pdf" ? (
+                              <a href={msg.file.data} download={msg.file.name} style={{ display:"flex", alignItems:"center", gap:8, color:"#ff6b35", textDecoration:"none", background:"#ff6b3515", borderRadius:8, padding:"8px 10px" }}>
+                                <span style={{ fontSize:24 }}>📄</span>
+                                <div><div style={{ fontWeight:600, fontSize:13 }}>{msg.file.name}</div><div style={{ fontSize:11, color:"#999" }}>{(msg.file.size/1024).toFixed(1)} KB</div></div>
+                              </a>
+                            ) : (
+                              <a href={msg.file.data} download={msg.file.name} style={{ display:"flex", alignItems:"center", gap:8, color:isMe?myColor:othColor, textDecoration:"none", background:`${isMe?myColor:othColor}15`, borderRadius:8, padding:"8px 10px" }}>
+                                <span style={{ fontSize:22 }}>📎</span>
+                                <div><div style={{ fontWeight:600, fontSize:13 }}>{msg.file.name}</div><div style={{ fontSize:11, color:"#999" }}>{(msg.file.size/1024).toFixed(1)} KB</div></div>
+                              </a>
+                            )}
+                          </div>
+                        )}
+                        {editId === msg.id ? (
+                          <div>
+                            <input value={editText} onChange={e=>setEditText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submitEdit()} style={{ background:"#ffffff10", border:`1px solid ${myColor}`, borderRadius:8, color:"#fff", padding:"4px 8px", fontSize:14, width:"100%" }}/>
+                            <div style={{ display:"flex", gap:8, marginTop:6 }}>
+                              <button onClick={submitEdit} style={{ flex:1, background:`${myColor}22`, border:`1px solid ${myColor}`, color:myColor, borderRadius:6, padding:"4px 0", fontSize:12, cursor:"pointer" }}>Save</button>
+                              <button onClick={()=>setEditId(null)} style={{ flex:1, background:"none", border:"1px solid #555", color:"#aaa", borderRadius:6, padding:"4px 0", fontSize:12, cursor:"pointer" }}>Cancel</button>
+                            </div>
+                          </div>
+                        ) : (
+                          msg.text && <div style={{ color:t.text, fontSize:15, lineHeight:1.4, wordBreak:"break-word" }}>{msg.text}</div>
+                        )}
+                        <div style={{ display:"flex", alignItems:"center", justifyContent:"flex-end", gap:6, marginTop:4 }}>
+                          {msg.edited && <span style={{ color:"#666", fontSize:10 }}>edited</span>}
+                          <span style={{ color:"#666", fontSize:11 }}>{msg.time}</span>
+                          {isMe && editId !== msg.id && (
+                            <>
+                              <button onClick={()=>startEdit(msg)} style={{ background:"none", border:"none", color:"#aaa", fontSize:11, cursor:"pointer", padding:"0 2px" }}>✏️</button>
+                              <button onClick={()=>deleteMsg(msg.id)} style={{ background:"none", border:"none", color:"#ff4444", fontSize:11, cursor:"pointer", padding:"0 2px" }}>🗑️</button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div ref={msgEndRef}/>
+              </div>
+
+              {/* Input bar */}
+              <div style={{ padding:"8px 10px 18px", borderTop:`1px solid ${t.border}`, background:`${t.bg}f0`, flexShrink:0 }}>
+                {/* Attachment row */}
+                <div style={{ display:"flex", gap:8, marginBottom:8 }}>
+                  {/* Gallery - images only */}
+                  <label style={{ cursor:"pointer", background:"#ffffff08", border:"1px solid #ffffff18", borderRadius:10, padding:"7px 12px", display:"flex", alignItems:"center", gap:6, fontSize:12, color:"#aaa" }}>
+                    <span style={{ fontSize:16 }}>🖼️</span> Gallery
+                    <input ref={galleryRef} type="file" accept="image/*" capture={false} style={{ display:"none" }} onChange={handleFile}/>
+                  </label>
+                  {/* File - docs, pdf etc */}
+                  <label style={{ cursor:"pointer", background:"#ffffff08", border:"1px solid #ffffff18", borderRadius:10, padding:"7px 12px", display:"flex", alignItems:"center", gap:6, fontSize:12, color:"#aaa" }}>
+                    <span style={{ fontSize:16 }}>📄</span> File
+                    <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx,.zip" style={{ display:"none" }} onChange={handleFile}/>
+                  </label>
+                </div>
+                {/* Message input row */}
+                <div style={{ display:"flex", alignItems:"flex-end", gap:8 }}>
+                  <textarea
+                    value={input} onChange={e=>setInput(e.target.value)}
+                    onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); sendMessage(input); } }}
+                    placeholder={`Message ${otherName}...`}
+                    rows={1}
+                    style={{ flex:1, background:`${t.primary}10`, border:`1px solid ${t.primary}33`, borderRadius:12, padding:"11px 14px", color:t.text, fontSize:15, outline:"none", resize:"none", fontFamily:"'Segoe UI', sans-serif", maxHeight:100, overflowY:"auto", lineHeight:1.4 }}
+                    onInput={e=>{ e.target.style.height="auto"; e.target.style.height=Math.min(e.target.scrollHeight,100)+"px"; }}
+                  />
+                  <button onClick={()=>sendMessage(input)} style={{ background:`linear-gradient(135deg,${myColor},${myColor}88)`, border:"none", borderRadius:12, padding:"11px 16px", cursor:"pointer", fontSize:18, boxShadow:`0 0 14px ${myColor}44`, flexShrink:0 }}>
+                    ➤
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    /* ─── PINS ─── */
+    const PINS = { neha:"3741", prince:"4137", student:"0909" };
+
+    /* ─── MAIN APP ─── */
+    function App() {
+      const [user, setUser] = useState(null);
+      const [pinTarget, setPinTarget] = useState(null);
+      const [pinInput, setPinInput] = useState("");
+      const [pinError, setPinError] = useState(false);
+      const [guestMode, setGuestMode] = useState(false);
+      const [guestUser, setGuestUser] = useState("");
+      const [guestPass, setGuestPass] = useState("");
+      const [guestError, setGuestError] = useState(false);
+      const [showPass, setShowPass] = useState(false);
+      const [focusField, setFocusField] = useState(null);
+      const [showSplash, setShowSplash] = useState(true);
+      const GUEST_USER = "AlterBro";
+      const GUEST_PASS = "896";
+
+      useEffect(() => {
+        const timer = setTimeout(() => setShowSplash(false), 2400);
+        return () => clearTimeout(timer);
+      }, []);
+
+      function handleGuestSubmit(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        if (guestUser.trim().toLowerCase() === GUEST_USER.toLowerCase() && guestPass.trim() === GUEST_PASS) {
+          setUser("guest");
+          setGuestMode(false);
+          setGuestUser("");
+          setGuestPass("");
+          setGuestError(false);
+        } else {
+          setGuestError(true);
+        }
+      }
+      const [screen, setScreen] = useState("home");
+      const [subScreen, setSubScreen] = useState(null);
+      const [expandedSubject, setExpandedSubject] = useState(null);
+      const [cyberSub, setCyberSub] = useState(null);
+      const [menuOpen, setMenuOpen] = useState(false);
+      const [stuName, setStuName] = useState(() => localStorage.getItem("sh_stu_name") || "");
+      const [stuClass, setStuClass] = useState(() => localStorage.getItem("sh_stu_class") || "");
+      const [stuSection, setStuSection] = useState(() => localStorage.getItem("sh_stu_section") || "");
+
+      function updateStu(field, val) {
+        if (field === "name") { setStuName(val); localStorage.setItem("sh_stu_name", val); }
+        if (field === "class") { setStuClass(val); localStorage.setItem("sh_stu_class", val); }
+        if (field === "section") { setStuSection(val); localStorage.setItem("sh_stu_section", val); }
+      }
+
+      const t = user ? profiles[user].theme : PINK;
+      const profile = user ? profiles[user] : null;
+
+      function go(s, sub = null) { setScreen(s); setSubScreen(sub); setExpandedSubject(null); setCyberSub(null); }
+
+      function handlePinDigit(d) {
+        const next = (pinInput + d).slice(0,4);
+        setPinInput(next);
+        setPinError(false);
+        if (next.length === 4) {
+          if (next === PINS[pinTarget]) {
+            setUser(pinTarget);
+            setPinTarget(null);
+            setPinInput("");
+          } else {
+            setPinError(true);
+            setTimeout(() => { setPinInput(""); setPinError(false); }, 700);
+          }
+        }
+      }
+
+      /* ─── SPLASH SCREEN ─── */
+      if (showSplash) {
+        return (
+          <div style={{ minHeight:"100vh", background:"#04000c", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Segoe UI', sans-serif", overflow:"hidden" }}>
+            <div style={{ textAlign:"center", animation:"zverseFade 2.4s ease forwards" }}>
+              <div style={{
+                fontSize:"clamp(28px, 8vw, 46px)", fontWeight:900, letterSpacing:3,
+                background:"linear-gradient(135deg,#ff2d78,#2d8fff,#00ff66)",
+                WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+                animation:"zverseGlow 2.4s ease-in-out infinite", color:"#fff"
+              }}>
+                Welcome To Zverse
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      /* ─── GUEST LOGIN MODAL ─── */
+      if (guestMode) {
+        const gColor = "#00ff66";
+        const inputStyle = (field) => ({
+          width:"100%", background:"#0d0d14", border:`1.5px solid ${guestError ? "#ff4444" : focusField===field ? gColor : "#ffffff1c"}`,
+          color:"#fff", borderRadius:12, padding:"14px 44px 14px 44px", fontSize:15, outline:"none",
+          transition:"border-color 0.2s, box-shadow 0.2s",
+          boxShadow: focusField===field ? `0 0 0 3px ${gColor}22` : "none",
+        });
+        return (
+          <div style={{ minHeight:"100vh", background:"#050308", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Segoe UI', sans-serif", padding:24, position:"relative", overflow:"hidden" }}>
+            <div style={{ position:"absolute", inset:0, pointerEvents:"none" }}>
+              <div style={{ position:"absolute", top:"-12%", right:"-10%", width:340, height:340, borderRadius:"50%", background:`radial-gradient(circle, ${gColor}14 0%, transparent 70%)` }} />
+              <div style={{ position:"absolute", bottom:"-14%", left:"-10%", width:320, height:320, borderRadius:"50%", background:"radial-gradient(circle, #2d8fff10 0%, transparent 70%)" }} />
+            </div>
+
+            <div style={{ width:"100%", maxWidth:380, position:"relative", zIndex:1 }}>
+              {/* Brand */}
+              <div style={{ textAlign:"center", marginBottom:30 }}>
+                <div style={{ width:56, height:56, margin:"0 auto 14px", borderRadius:16, background:"linear-gradient(135deg,#ff2d78,#2d8fff)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 0 24px #ff2d7840" }}>
+                  <NeonIcon type="book" color="#fff" size={28}/>
+                </div>
+                <div style={{ fontSize:24, fontWeight:900, letterSpacing:1, background:"linear-gradient(135deg,#ff2d78,#2d8fff,#00ff66)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>Zverse</div>
+              </div>
+
+              {/* Card */}
+              <form onSubmit={handleGuestSubmit} style={{
+                background:"linear-gradient(180deg,#0e0e16,#0a0a12)", border:"1px solid #ffffff14",
+                borderRadius:20, padding:"30px 26px", boxShadow:"0 20px 60px #00000080, 0 0 0 1px #ffffff08"
+              }}>
+                <div style={{ fontSize:19, fontWeight:800, color:"#fff", marginBottom:4 }}>Welcome back</div>
+                <div style={{ color:"#777", fontSize:13, marginBottom:26 }}>Sign in as guest to continue</div>
+
+                <div style={{ marginBottom:16 }}>
+                  <label style={{ display:"block", fontSize:11.5, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:0.6, marginBottom:7 }}>Username</label>
+                  <div style={{ position:"relative" }}>
+                    <div style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)" }}><NeonIcon type="user" color={focusField==="user" ? gColor : "#555"} size={16}/></div>
+                    <input
+                      type="text" autoCapitalize="none" autoCorrect="off" placeholder="Enter username"
+                      value={guestUser}
+                      onFocus={() => setFocusField("user")} onBlur={() => setFocusField(null)}
+                      onChange={e => { setGuestUser(e.target.value); setGuestError(false); }}
+                      style={inputStyle("user")}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom:8 }}>
+                  <label style={{ display:"block", fontSize:11.5, fontWeight:700, color:"#888", textTransform:"uppercase", letterSpacing:0.6, marginBottom:7 }}>Password</label>
+                  <div style={{ position:"relative" }}>
+                    <div style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)" }}><NeonIcon type="lock" color={focusField==="pass" ? gColor : "#555"} size={16}/></div>
+                    <input
+                      type={showPass ? "text" : "password"} placeholder="Enter password"
+                      value={guestPass}
+                      onFocus={() => setFocusField("pass")} onBlur={() => setFocusField(null)}
+                      onChange={e => { setGuestPass(e.target.value); setGuestError(false); }}
+                      style={inputStyle("pass")}
+                    />
+                    <button type="button" onClick={() => setShowPass(s => !s)} style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", color:"#666", fontSize:11.5, fontWeight:700, cursor:"pointer", letterSpacing:0.4 }}>
+                      {showPass ? "HIDE" : "SHOW"}
+                    </button>
+                  </div>
+                </div>
+
+                {guestError && (
+                  <div style={{ display:"flex", alignItems:"center", gap:6, color:"#ff5a5a", fontSize:12.5, fontWeight:600, marginTop:10, background:"#ff444414", border:"1px solid #ff444430", borderRadius:9, padding:"8px 10px" }}>
+                    ⚠ Error 202
+                  </div>
+                )}
+
+                <button type="submit" style={{
+                  width:"100%", background:`linear-gradient(135deg,${gColor},#00cc52)`, border:"none", color:"#04140a",
+                  borderRadius:12, padding:"14px 0", cursor:"pointer", fontSize:15.5, fontWeight:800,
+                  boxShadow:`0 8px 24px ${gColor}35`, marginTop:22, letterSpacing:0.3
+                }}>
+                  Sign In
+                </button>
+              </form>
+
+              <button type="button" onClick={() => { setGuestMode(false); setGuestUser(""); setGuestPass(""); setGuestError(false); }} style={{ display:"block", margin:"22px auto 0", background:"none", border:"none", color:"#666", fontSize:13, cursor:"pointer" }}>← Back</button>
+            </div>
+          </div>
+        );
+      }
+
+      /* ─── PIN MODAL ─── */
+      if (pinTarget) {
+        const pinColor = pinTarget === "neha" ? "#ff2d78" : pinTarget === "prince" ? "#2d8fff" : "#00ff66";
+        const pinName  = pinTarget === "neha" ? "Neha" : pinTarget === "prince" ? "Prince" : "Student";
+        return (
+          <div style={{ minHeight:"100vh", background:"#04000c", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Segoe UI', sans-serif", padding:24 }}>
+            <div style={{ width:"100%", maxWidth:320, textAlign:"center" }}>
+              <div style={{ marginBottom:8 }}><NeonIcon type="lock" color={pinColor} size={44}/></div>
+              <div style={{ fontSize:22, fontWeight:800, color:pinColor, textShadow:`0 0 14px ${pinColor}`, marginBottom:4 }}>Enter PIN</div>
+              <div style={{ color:"#666", fontSize:13, marginBottom:28 }}>Login as {pinName}</div>
+
+              {/* Dots */}
+              <div style={{ display:"flex", justifyContent:"center", gap:16, marginBottom:32 }}>
+                {[0,1,2,3].map(i => (
+                  <div key={i} style={{
+                    width:18, height:18, borderRadius:"50%",
+                    background: i < pinInput.length ? pinColor : "transparent",
+                    border:`2px solid ${pinError ? "#ff4444" : pinColor}`,
+                    boxShadow: i < pinInput.length ? `0 0 12px ${pinColor}` : "none",
+                    transition:"all 0.15s",
+                    transform: pinError ? "scale(1.2)" : "scale(1)"
+                  }}/>
+                ))}
+              </div>
+              {pinError && <div style={{ color:"#ff4444", fontSize:13, marginBottom:16, fontWeight:600 }}>❌ Wrong PIN</div>}
+
+              {/* Numpad */}
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12, marginBottom:14 }}>
+                {["1","2","3","4","5","6","7","8","9"].map(d => (
+                  <button key={d} onClick={() => handlePinDigit(d)} style={{
+                    background:"#ffffff08", border:`1px solid ${pinColor}33`, color:"#fff",
+                    borderRadius:14, padding:"18px 0", fontSize:22, fontWeight:700,
+                    cursor:"pointer", boxShadow:`0 0 8px ${pinColor}18`,
+                    transition:"all 0.12s", fontFamily:"'Segoe UI', sans-serif"
+                  }}>{d}</button>
+                ))}
+                <div/>
+                <button onClick={() => handlePinDigit("0")} style={{
+                  background:"#ffffff08", border:`1px solid ${pinColor}33`, color:"#fff",
+                  borderRadius:14, padding:"18px 0", fontSize:22, fontWeight:700,
+                  cursor:"pointer", boxShadow:`0 0 8px ${pinColor}18`, fontFamily:"'Segoe UI', sans-serif"
+                }}>0</button>
+                <button onClick={() => { setPinInput(p => p.slice(0,-1)); setPinError(false); }} style={{
+                  background:"#ffffff05", border:`1px solid #ffffff15`, color:"#aaa",
+                  borderRadius:14, padding:"18px 0", fontSize:18, fontWeight:700,
+                  cursor:"pointer", fontFamily:"'Segoe UI', sans-serif"
+                }}>⌫</button>
+              </div>
+
+              <button onClick={() => { setPinTarget(null); setPinInput(""); setPinError(false); }} style={{ background:"none", border:"none", color:"#555", fontSize:13, cursor:"pointer", marginTop:4 }}>← Back to profiles</button>
+            </div>
+          </div>
+        );
+      }
+
+      if (!user) {
+        return (
+          <div style={{ minHeight:"100vh", background:"#04000c", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Segoe UI', sans-serif", padding:24, position:"relative", overflow:"hidden" }}>
+            <div style={{ position:"absolute", inset:0, overflow:"hidden", pointerEvents:"none" }}>
+              <div style={{ position:"absolute", top:"-18%", left:"-8%", width:"32vw", maxWidth:420, height:"32vw", maxHeight:420, borderRadius:"50%", background:"radial-gradient(circle,#ff2d7816 0%,transparent 70%)" }} />
+              <div style={{ position:"absolute", top:"-20%", right:"-8%", width:"30vw", maxWidth:400, height:"30vw", maxHeight:400, borderRadius:"50%", background:"radial-gradient(circle,#2d8fff14 0%,transparent 70%)" }} />
+              <div style={{ position:"absolute", bottom:"-16%", left:"8%", width:"28vw", maxWidth:380, height:"28vw", maxHeight:380, borderRadius:"50%", background:"radial-gradient(circle,#00ff6612 0%,transparent 70%)" }} />
+              <div style={{ position:"absolute", bottom:"-12%", right:"12%", width:"26vw", maxWidth:350, height:"26vw", maxHeight:350, borderRadius:"50%", background:"radial-gradient(circle,#ff2d7812 0%,transparent 70%)" }} />
+              <div style={{ position:"absolute", top:"30%", left:"42%", width:"22vw", maxWidth:300, height:"22vw", maxHeight:300, borderRadius:"50%", background:"radial-gradient(circle,#2d8fff10 0%,transparent 70%)" }} />
+              <svg style={{ position:"absolute", inset:0, width:"100%", height:"100%", opacity:0.22 }} viewBox="0 0 1600 900" preserveAspectRatio="none">
+                <path d="M-50 150 Q300 40 620 230 T1220 190 T1650 340" stroke="#ff2d78" strokeWidth="1.4" fill="none"/>
+                <path d="M-50 450 Q260 340 560 490 T1120 440 T1650 600" stroke="#2d8fff" strokeWidth="1.1" fill="none"/>
+                <path d="M-50 700 Q310 610 710 750 T1320 700 T1650 810" stroke="#00ff66" strokeWidth="1" fill="none"/>
+                <circle cx="120" cy="110" r="3" fill="#ff2d78" opacity="0.6"/>
+                <circle cx="800" cy="70" r="2.5" fill="#2d8fff" opacity="0.6"/>
+                <circle cx="1420" cy="190" r="2.5" fill="#00ff66" opacity="0.5"/>
+                <circle cx="280" cy="590" r="2.5" fill="#ff2d78" opacity="0.4"/>
+                <circle cx="1080" cy="680" r="2.5" fill="#2d8fff" opacity="0.5"/>
+                <circle cx="1540" cy="480" r="2.5" fill="#00ff66" opacity="0.5"/>
+              </svg>
+            </div>
+            <div style={{ position:"relative", zIndex:1, width:"100%", maxWidth:380 }}>
+              <div style={{ textAlign:"center", marginBottom:40 }}>
+                <NeonIcon type="book" color="#ff2d78" size={52} />
+                <div style={{ fontSize:30, fontWeight:900, marginTop:12, background:"linear-gradient(135deg,#ff2d78,#2d8fff)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>StudyHub</div>
+                <div style={{ color:"#666", marginTop:4, fontSize:13, letterSpacing:2, textTransform:"uppercase" }}>Continue to Login</div>
+              </div>
+              <button onClick={() => { setGuestMode(true); setGuestUser(""); setGuestPass(""); setGuestError(false); }} style={{ width:"100%", background:"linear-gradient(135deg,#ff2d7818,#2d8fff18)", border:"1.5px solid #ffffff55", color:"#fff", borderRadius:16, padding:"18px 24px", cursor:"pointer", fontSize:17, fontWeight:700, boxShadow:"0 0 22px #ffffff20", display:"flex", alignItems:"center", justifyContent:"center", gap:12 }}>
+                <NeonIcon type="user" color="#fff" size={22}/> Login As Guest
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      const navItems = [
+        { icon:"home",   label:"Home",         s:"home"         },
+        { icon:"cal",    label:"Schedule",     s:"schedule"     },
+        { icon:"trophy", label:"Achievements", s:"achievements" },
+        { icon:"user",   label:"Profile",      s:"profile"      },
+      ];
+
+      function renderContent() {
+        if (screen === "profile") {
+          if (profile.isStudent) {
+            const fields = [
+              { key:"name",    label:"✏️ Name",    val:stuName },
+              { key:"class",   label:"🏫 Class",    val:stuClass },
+              { key:"section", label:"🔠 Section",  val:stuSection },
+            ];
+            return (
+              <div style={{ padding:20 }}>
+                <div style={{ textAlign:"center", marginBottom:26 }}>
+                  <div style={{ width:80, height:80, borderRadius:"50%", background:`linear-gradient(135deg,${t.primary},${t.secondary})`, margin:"0 auto 14px", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                    <NeonIcon type="user" color="#000" size={38}/>
+                  </div>
+                  <div style={{ fontSize:22, fontWeight:800, color:t.text }}>{stuName || "Student"}</div>
+                </div>
+                {fields.map(f => (
+                  <div key={f.key} style={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:14, padding:"13px 16px", marginBottom:11, boxShadow:`0 0 8px ${t.glow}` }}>
+                    <div style={{ color:t.sub, fontSize:11, marginBottom:6, letterSpacing:0.5 }}>{f.label}</div>
+                    <input
+                      value={f.val}
+                      onChange={e => updateStu(f.key, e.target.value)}
+                      placeholder={`Enter your ${f.key}`}
+                      style={{ width:"100%", background:"none", border:"none", borderBottom:`1px solid ${t.border}`, color:t.text, fontWeight:600, fontSize:15, padding:"4px 0", outline:"none" }}
+                    />
+                  </div>
+                ))}
+                <button onClick={() => setUser(null)} style={{ width:"100%", background:"none", border:`1px solid ${t.primary}`, color:t.primary, borderRadius:12, padding:12, cursor:"pointer", marginTop:8, fontWeight:600, boxShadow:`0 0 8px ${t.glow}` }}>Logout</button>
+              </div>
+            );
+          }
+          return (
+            <div style={{ padding:20 }}>
+              <div style={{ textAlign:"center", marginBottom:26 }}>
+                <div style={{ width:80, height:80, borderRadius:"50%", background:`linear-gradient(135deg,${t.primary},${t.secondary})`, margin:"0 auto 14px", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                  <NeonIcon type="user" color="#fff" size={38}/>
+                </div>
+                <div style={{ fontSize:22, fontWeight:800, color:t.text }}>{profile.fullName}</div>
+              </div>
+              {[["🎓 College",profile.college],["🔢 Roll Number",profile.roll],["👨‍👧 Father",profile.father],["👩‍👧 Mother",profile.mother]].map(([label,val])=>(
+                <div key={label} style={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:14, padding:"13px 16px", marginBottom:11, boxShadow:`0 0 8px ${t.glow}` }}>
+                  <div style={{ color:t.sub, fontSize:11, marginBottom:2, letterSpacing:0.5 }}>{label}</div>
+                  <div style={{ color:t.text, fontWeight:600 }}>{val}</div>
+                </div>
+              ))}
+              <button onClick={() => setUser(null)} style={{ width:"100%", background:"none", border:`1px solid ${t.primary}`, color:t.primary, borderRadius:12, padding:12, cursor:"pointer", marginTop:8, fontWeight:600, boxShadow:`0 0 8px ${t.glow}` }}>Logout</button>
+            </div>
+          );
+        }
+
+        if (screen === "schedule")     return <ScheduleScreen t={t} onBack={() => go("home")} userName={user} />;
+        if (screen === "achievements") {
+          if (user === "prince") return <ComingSoon t={t} onBack={() => go("home")} />;
+          return <AchievementsScreen t={t} onBack={() => go("home")} />;
+        }
+        if (screen === "lovediary")    return <LoveDiaryScreen t={t} userName={user} onBack={() => go("home")} />;
+        if (screen === "connect")      return <ConnectScreen t={t} userName={user} onBack={() => go("home")} />;
+
+        if (screen === "notes") {
+          const noteSubjects = [
+            { name:"DSTL",          icon:"dstl",  color:"#ff2d78", url:"https://drive.google.com/drive/folders/12mtaxsjQ_kaF8rIsx6FJ_Y-WQtBoShwv" },
+            { name:"Human Values",  icon:"hv",    color:"#39ff14", url:"https://drive.google.com/drive/folders/1-S4q9vKH7hQPGor1oHNz0hcIQU0XZU7K" },
+            { name:"DS",            icon:"ds",    color:"#00f5ff", url:"https://drive.google.com/drive/folders/1Czib8wuX_exB4rah00qpHlDQwcNAw1rg" },
+            { name:"COA",           icon:"coa",   color:"#00bfff", url:"https://drive.google.com/drive/folders/16_J5DFLh3HPX_5WnBumsfpLjxG-aAsl8" },
+            { name:"Cyber Security",icon:"cyber", color:"#bf00ff", url:"https://drive.google.com/drive/folders/14RPryqiD8ZNbCvGINCJL_u3mURIp9uxf" },
+          ];
+
+          // Notes sub-option: null = picker, "drive" = google drive list, "direct" = open link
+          if (!subScreen) {
+            return (
+              <div style={{ padding:20 }}>
+                <BackBtn t={t} onClick={() => go("home")} />
+                <SectionTitle t={t} icon="notes" label="Notes" />
+
+                {/* Google Drive Option */}
+                <button onClick={() => setSubScreen("drive")} style={{
+                  display:"flex", width:"100%", alignItems:"center", gap:14,
+                  background:t.card, border:`1px solid ${t.border}`,
+                  borderRadius:14, padding:"18px 16px", marginBottom:13,
+                  cursor:"pointer", boxShadow:`0 0 14px ${t.glow}`,
+                  position:"relative", overflow:"hidden", textAlign:"left"
+                }}>
+                  <div style={{ position:"absolute", left:0, top:0, bottom:0, width:3, background:"#00bfff", boxShadow:"0 0 8px #00bfff", borderRadius:"3px 0 0 3px" }} />
+                  <div style={{ width:44, height:44, borderRadius:12, background:"#00bfff18", border:"1px solid #00bfff44", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ filter:"drop-shadow(0 0 6px #00bfff)" }}>
+                      <path d="M4.5 19L9 11l4.5 8H4.5z" stroke="#00bfff" strokeWidth="1.8" strokeLinejoin="round"/>
+                      <path d="M9 11l4.5-8 4.5 8H9z" stroke="#4fc3f7" strokeWidth="1.8" strokeLinejoin="round"/>
+                      <path d="M13.5 19l4.5-8H9l4.5 8z" stroke="#29b6f6" strokeWidth="1.8" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontWeight:800, fontSize:16, color:t.text, marginBottom:3 }}>Google Drive</div>
+                    <div style={{ fontSize:12, color:"#00bfff", textShadow:"0 0 6px #00bfff44" }}>Subject-wise notes folders</div>
+                  </div>
+                  <NeonIcon type="arrow" color="#00bfff" size={18} />
+                </button>
+
+                {/* Direct Notes Option */}
+                <button onClick={() => window.open("https://nehaprince3741.github.io/Notesh", "_blank")} style={{
+                  display:"flex", width:"100%", alignItems:"center", gap:14,
+                  background:t.card, border:`1px solid ${t.border}`,
+                  borderRadius:14, padding:"18px 16px", marginBottom:13,
+                  cursor:"pointer", boxShadow:`0 0 14px ${t.glow}`,
+                  position:"relative", overflow:"hidden", textAlign:"left"
+                }}>
+                  <div style={{ position:"absolute", left:0, top:0, bottom:0, width:3, background:t.primary, boxShadow:`0 0 8px ${t.primary}`, borderRadius:"3px 0 0 3px" }} />
+                  <div style={{ width:44, height:44, borderRadius:12, background:`${t.primary}18`, border:`1px solid ${t.primary}44`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                    <NeonIcon type="notes" color={t.primary} size={24} />
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontWeight:800, fontSize:16, color:t.text, marginBottom:3 }}>Direct Notes</div>
+                    <div style={{ fontSize:12, color:t.secondary, textShadow:`0 0 6px ${t.primary}44` }}>Open notes website directly</div>
+                  </div>
+                  <NeonIcon type="arrow" color={t.primary} size={18} />
+                </button>
+              </div>
+            );
+          }
+
+          if (subScreen === "drive") {
+            return (
+              <div style={{ padding:20 }}>
+                <BackBtn t={t} onClick={() => setSubScreen(null)} label="Notes" />
+                <SectionTitle t={t} icon="notes" label="Google Drive Notes" />
+                {noteSubjects.map((sub) => (
+                  <a key={sub.name} href={sub.url} target="_blank" rel="noopener noreferrer"
+                    style={{ display:"flex", alignItems:"center", gap:14,
+                      background:t.card, border:`1px solid ${t.border}`,
+                      borderRadius:14, padding:"14px 16px", marginBottom:11,
+                      textDecoration:"none", boxShadow:`0 0 10px ${t.glow}`,
+                      position:"relative", overflow:"hidden" }}>
+                    <div style={{ position:"absolute", left:0, top:0, bottom:0, width:3, background:sub.color, boxShadow:`0 0 8px ${sub.color}`, borderRadius:"3px 0 0 3px" }} />
+                    <NeonIcon type={sub.icon} color={sub.color} size={26} />
+                    <span style={{ flex:1, fontWeight:700, fontSize:15, color:t.text }}>{sub.name}</span>
+                    <span style={{ fontSize:12, color:sub.color, fontWeight:600, marginRight:6, textShadow:`0 0 6px ${sub.color}` }}>Drive</span>
+                    <NeonIcon type="arrow" color={sub.color} size={16} />
+                  </a>
+                ))}
+              </div>
+            );
+          }
+        }
+
+        if (screen === "syllabus") {
+          window.open("https://fms.aktu.ac.in/Resources/aktu/pdf/syllabus/Syllabus2324/B.Tech_2nd_Yr_CSE_v3.pdf","_blank");
+          go("home"); return null;
+        }
+
+        /* SUBJECTS */
+        if (screen === "subjects") {
+          if (!subScreen) return (
+            <div style={{ padding:20 }}>
+              <BackBtn t={t} onClick={() => go("home")} />
+              <SectionTitle t={t} icon="book" label="Subjects" />
+              <OptionBtn t={t} iconType="cal" iconColor={t.primary} label="Semester 3" onClick={() => setSubScreen("sem3")} />
+              <OptionBtn t={t} iconType="lock" iconColor="#555" label="Semester 4" onClick={() => setSubScreen("sem4")} />
+            </div>
+          );
+          if (subScreen === "sem4") return <ComingSoon t={t} onBack={() => setSubScreen(null)} />;
+          return (
+            <div style={{ padding:"0 14px 14px" }}>
+              <div style={{ paddingTop:14, marginBottom:14 }}><BackBtn t={t} onClick={() => setSubScreen(null)} /></div>
+              <SectionTitle t={t} icon="book" label="Semester 3" />
+              {studySubjects.map(sub => (
+                <div key={sub.id}>
+                  <button onClick={() => { setExpandedSubject(expandedSubject===sub.id?null:sub.id); setCyberSub(null); }} style={{
+                    display:"flex", width:"100%", alignItems:"center", gap:12,
+                    background: expandedSubject===sub.id ? `${t.primary}18` : t.card,
+                    border:`1px solid ${expandedSubject===sub.id ? t.primary : t.border}`,
+                    color:t.text, borderRadius:14, padding:"13px 14px", cursor:"pointer",
+                    fontWeight:700, fontSize:15, marginBottom:8, boxShadow:`0 0 8px ${t.glow}`,
+                  }}>
+                    <NeonIcon type={sub.icon} color={t.primary} size={22}/>
+                    <span style={{ flex:1, textAlign:"left" }}>{sub.name}</span>
+                    <span style={{ color:t.primary, fontSize:16 }}>{expandedSubject===sub.id?"▲":"▼"}</span>
+                  </button>
+                  {expandedSubject===sub.id && (
+                    <div style={{ background:t.bg, borderRadius:12, padding:"10px 8px", marginBottom:10 }}>
+                      {sub.isCyber ? (
+                        cyberSub ? (
+                          <div>
+                            <BackBtn t={t} onClick={() => setCyberSub(null)} label="Cyber Security" />
+                            <div style={{ fontWeight:700, color:t.primary, marginBottom:10 }}>{cyberSub==="gateway"?"🔐 Gateway":"📖 Semester Adda"}</div>
+                            {(cyberSub==="gateway" ? sub.gateway : sub.semAdda).map((url,i)=>(<UnitBtn key={i} t={t} label={`Unit ${i+1}`} url={url}/>))}
+                          </div>
+                        ) : (
+                          <div>
+                            <OptionBtn t={t} iconType="cyber" iconColor="#bf00ff" label="Gateway" onClick={()=>setCyberSub("gateway")}/>
+                            <OptionBtn t={t} iconType="book" iconColor={t.secondary} label="Semester Adda" onClick={()=>setCyberSub("semadda")}/>
+                          </div>
+                        )
+                      ) : sub.isDsMulti ? (
+                        cyberSub && cyberSub.startsWith("ds_") ? (
+                          <div>
+                            <BackBtn t={t} onClick={() => setCyberSub(null)} label="DS" />
+                            <div style={{ fontWeight:700, color:"#00f5ff", marginBottom:10 }}>{cyberSub==="ds_gateway"?"🗂️ DS Gateway":"📖 Semester Adda"}</div>
+                            {cyberSub==="ds_gateway"
+                              ? sub.gateway.map((item,i)=>(<UnitBtn key={i} t={t} label={item.label} url={item.url}/>))
+                              : sub.units.map((url,i)=>(<UnitBtn key={i} t={t} label={`Unit ${i+1}`} url={url}/>))
+                            }
+                          </div>
+                        ) : (
+                          <div>
+                            <OptionBtn t={t} iconType="ds" iconColor="#00f5ff" label="DS Gateway" onClick={()=>setCyberSub("ds_gateway")}/>
+                            <OptionBtn t={t} iconType="book" iconColor={t.secondary} label="Semester Adda" onClick={()=>setCyberSub("ds_semadda")}/>
+                          </div>
+                        )
+                      ) : (sub.units||[]).map((url,i)=>(<UnitBtn key={i} t={t} label={`Unit ${i+1}`} url={url}/>))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        }
+
+        /* DEVELOPER LECTURES */
+        if (screen === "devlectures") {
+          if (!subScreen) return (
+            <div style={{ padding:20 }}>
+              <BackBtn t={t} onClick={() => go("home")} />
+              <SectionTitle t={t} icon="grad" label="Developer Lectures" />
+              <OptionBtn t={t} iconType="code" iconColor="#00f5ff" label="Coding Verse" onClick={() => setSubScreen("codingverse")} />
+              <OptionBtn t={t} iconType="tech" iconColor="#ffe600" label="Technical Era" onClick={() => setSubScreen("techera")} />
+            </div>
+          );
+          const items = subScreen==="codingverse" ? codingVerse : technicalEra;
+          const title = subScreen==="codingverse" ? "Coding Verse" : "Technical Era";
+          const col = subScreen==="codingverse" ? "#00f5ff" : "#ffe600";
+          return (
+            <div style={{ padding:20 }}>
+              <BackBtn t={t} onClick={() => setSubScreen(null)} />
+              <SectionTitle t={t} icon={subScreen==="codingverse"?"code":"tech"} label={title} />
+              {items.map((item,i) => (
+                <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", background:t.card, border:`1px solid ${t.border}`, color:col, borderRadius:12, padding:"13px 16px", textDecoration:"none", fontWeight:600, fontSize:15, marginBottom:10, boxShadow:`0 0 8px ${t.glow}`, textShadow:`0 0 8px ${col}88` }}>
+                  <span>{item.name}</span><NeonIcon type="arrow" color={col} size={16}/>
+                </a>
+              ))}
+            </div>
+          );
+        }
+
+        /* CODING OPTIONS */
+        if (screen === "coding") {
+          if (!subScreen) return (
+            <div style={{ padding:20 }}>
+              <BackBtn t={t} onClick={() => go("home")} />
+              <SectionTitle t={t} icon="code" label="Coding Options" />
+              <OptionBtn t={t} iconType="code" iconColor={t.primary} label="Generalise Coding" onClick={() => setSubScreen("general")} />
+              <OptionBtn t={t} iconType="web" iconColor="#00f5ff" label="Frontend Developer" onClick={() => setSubScreen("frontend")} />
+              <OptionBtn t={t} iconType="lock" iconColor="#555" label="Backend (4th Sem)" disabled />
+              <OptionBtn t={t} iconType="lock" iconColor="#555" label="Database (5th Sem)" disabled />
+            </div>
+          );
+          const items = subScreen==="general" ? generalCoding : frontendDev;
+          const title = subScreen==="general" ? "Generalise Coding" : "Frontend Developer";
+          return (
+            <div style={{ padding:20 }}>
+              <BackBtn t={t} onClick={() => setSubScreen(null)} />
+              <SectionTitle t={t} icon="code" label={title} />
+              {items.map((item,i) => (
+                <a key={i} href={item.url} target="_blank" rel="noopener noreferrer" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", background:t.card, border:`1px solid ${t.border}`, color:t.primary, borderRadius:12, padding:"13px 16px", textDecoration:"none", fontWeight:600, fontSize:15, marginBottom:10, boxShadow:`0 0 8px ${t.glow}` }}>
+                  <span>{item.name}</span><NeonIcon type="arrow" color={t.primary} size={16}/>
+                </a>
+              ))}
+            </div>
+          );
+        }
+
+        /* HOME */
+        const hr = new Date().getHours();
+        const greetTime = hr < 12 ? "Good Morning" : hr < 17 ? "Good Afternoon" : "Good Evening";
+        const displayName = profile.isStudent && stuName ? stuName : profile.name;
+        const initial = (displayName || "G").trim().charAt(0).toUpperCase();
+        const cards = [
+          { iconType:"book",     iconColor:t.primary,    title:"Subjects",       desc:"Explore study subjects",  onClick:() => go("subjects") },
+          { iconType:"notes",    iconColor:t.secondary,  title:"Notes",          desc:"Access your study notes", onClick:() => go("notes") },
+          { iconType:"grad",     iconColor:"#00f5ff",    title:"Dev Lectures",   desc:"Learn dev skills",        onClick:() => go("devlectures") },
+          { iconType:"code",     iconColor:"#ffe600",    title:"CodingVerse",    desc:"Master coding skills",    onClick:() => window.open("https://nehaprince3741.github.io/Coding/", "_blank") },
+          { iconType:"syllabus", iconColor:"#bf00ff",    title:"2nd Yr Syllabus",desc:"View full syllabus PDF",  onClick:() => go("syllabus") },
+          { iconType:"hv",       iconColor:"#39ff14",    title:"Love Diary",     desc:"Write your day memories", onClick:() => go("lovediary") },
+          { iconType:"star",     iconColor:"#ffe600",    title:"PYQs",           desc:"Previous year questions", onClick:() => window.open("https://nehaprince3741.github.io/Pyqs/", "_blank") },
+        ];
+        if (!profile.noConnect) cards.push({ iconType:"bell", iconColor:"#39ff14", title:"Connect", desc:"Chat, Call & Video", onClick:() => go("connect") });
+
+        return (
+          <div style={{ padding:"18px 14px 6px" }}>
+            {/* Header card */}
+            <div style={{
+              background:`linear-gradient(135deg, ${t.primary}14, ${t.card})`, border:`1px solid ${t.border}`,
+              borderRadius:20, padding:"20px 18px", marginBottom:22, boxShadow:`0 0 20px ${t.glow}`,
+              display:"flex", alignItems:"center", gap:14
+            }}>
+              <div style={{
+                width:52, height:52, borderRadius:14, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
+                background:`linear-gradient(135deg, ${t.primary}, ${t.secondary})`, color:"#04140a", fontWeight:900, fontSize:22,
+                boxShadow:`0 0 18px ${t.primary}55`
+              }}>{initial}</div>
+              <div style={{ minWidth:0 }}>
+                <div style={{ color:t.sub, fontSize:12.5, fontWeight:600, letterSpacing:0.3 }}>{greetTime} ✦</div>
+                <div style={{ fontSize:22, fontWeight:900, color:t.text, letterSpacing:-0.3, lineHeight:1.2, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{displayName}</div>
+              </div>
+            </div>
+
+            {/* Cards grid */}
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(220px, 1fr))", gap:14, marginBottom:14 }}>
+              {cards.map((c,i) => (
+                <HomeCard key={i} t={t} iconType={c.iconType} iconColor={c.iconColor} title={c.title} desc={c.desc} onClick={c.onClick} />
+              ))}
+            </div>
+
+            {/* Quote card */}
+            <div style={{
+              background:`linear-gradient(135deg, ${t.card}, ${t.bg})`, border:`1px solid ${t.border}`, borderRadius:16,
+              padding:"14px 18px", display:"flex", alignItems:"center", gap:12, boxShadow:`0 0 12px ${t.glow}`
+            }}>
+              <div style={{ width:32, height:32, borderRadius:10, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center", background:`${t.primary}18` }}>
+                <NeonIcon type="hv" color={t.primary} size={16}/>
+              </div>
+              <span style={{ color:t.sub, fontSize:13, lineHeight:1.4 }}>Small steps every day lead to big results.</span>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div style={{ width:"100%", margin:"0 auto", minHeight:"100vh", fontFamily:"'Segoe UI', sans-serif", position:"relative", background:t.bg, color:t.text }}>
+          <GlowBg t={t} />
+
+          {/* MENU DRAWER */}
+          {menuOpen && (
+            <div style={{ position:"fixed", inset:0, zIndex:100, display:"flex" }}>
+              <div onClick={() => setMenuOpen(false)} style={{ flex:1, background:"#00000085" }} />
+              <div style={{ width:280, background:t.card, borderLeft:`1px solid ${t.border}`, padding:28, display:"flex", flexDirection:"column" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:6 }}>
+                  <NeonIcon type="user" color={t.primary} size={22}/>
+                  <span style={{ fontSize:20, fontWeight:800, color:t.primary, textShadow:`0 0 10px ${t.primary}` }}>About You</span>
+                </div>
+                <div style={{ color:t.sub, fontSize:13, marginBottom:22, letterSpacing:0.5 }}>Personal Section</div>
+                {profile.menuMsg && (
+                  <div style={{ background:`${t.primary}12`, border:`1px solid ${t.primary}40`, borderRadius:16, padding:22, textAlign:"center", boxShadow:`0 0 18px ${t.primary}20` }}>
+                    <NeonIcon type="hv" color={t.primary} size={40}/>
+                    <div style={{ fontSize:21, fontWeight:800, color:t.primary, lineHeight:1.4, marginTop:12, textShadow:`0 0 14px ${t.primary}` }}>{profile.menuMsg}</div>
+                  </div>
+                )}
+                <div style={{ marginTop:"auto" }}>
+                  <button onClick={() => setMenuOpen(false)} style={{ width:"100%", background:"none", border:`1px solid ${t.border}`, color:t.sub, borderRadius:12, padding:11, cursor:"pointer", fontWeight:600 }}>Close</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* HEADER */}
+          <div style={{ position:"sticky", top:0, zIndex:50, background:`${t.bg}ee`, backdropFilter:"blur(14px)", padding:"11px 18px", display:"flex", justifyContent:"space-between", alignItems:"center", borderBottom:`1px solid ${t.border}` }}>
+            {profile.showMenu
+              ? <button onClick={() => setMenuOpen(true)} style={{ background:"none", border:"none", cursor:"pointer", padding:2 }}><NeonIcon type="menu" color={t.primary} size={24}/></button>
+              : <div style={{ width:28 }} />}
+            <div style={{ fontWeight:900, fontSize:17, color:t.primary, letterSpacing:2, textShadow:`0 0 12px ${t.primary}88` }}>StudyHub</div>
+            <button style={{ background:"none", border:"none", cursor:"pointer", padding:2 }}><NeonIcon type="bell" color={t.primary} size={22}/></button>
+          </div>
+
+          {/* CONTENT */}
+          <div style={{ position:"relative", zIndex:1, paddingBottom:84, paddingLeft:"clamp(0px, 4vw, 100px)", paddingRight:"clamp(0px, 4vw, 100px)" }}>
+            {renderContent()}
+          </div>
+
+          {/* BOTTOM NAV */}
+          <div style={{ position:"fixed", bottom:0, left:0, width:"100%", background:`${t.bg}f2`, backdropFilter:"blur(14px)", borderTop:`1px solid ${t.border}`, display:"flex", justifyContent:"center", gap:"clamp(24px, 5vw, 80px)", alignItems:"center", padding:"8px 0 14px", zIndex:50 }}>
+            {navItems.map(nav => {
+              const active = screen === nav.s;
+              return (
+                <button key={nav.s} onClick={() => go(nav.s)} style={{ background:"none", border:"none", cursor:"pointer", display:"flex", flexDirection:"column", alignItems:"center", gap:3, padding:"2px 10px" }}>
+                  <div style={{ filter: active ? `drop-shadow(0 0 8px ${t.primary})` : "none", transition:"filter 0.2s" }}>
+                    <NeonIcon type={nav.icon} color={active ? t.primary : "#666688"} size={24}/>
+                  </div>
+                  <span style={{ fontSize:11, fontWeight: active ? 700 : 400, color: active ? t.primary : "#666688", textShadow: active ? `0 0 6px ${t.primary}` : "none" }}>{nav.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1f9d8b11badce62',t:'MTc4NDgwMDkxNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
